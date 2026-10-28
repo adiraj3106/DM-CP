@@ -13,7 +13,7 @@ import {
   Loader2,
 } from 'lucide-react';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 /**
  * Deterministic string hash for position seeding (no Math.random)
@@ -131,6 +131,7 @@ export function NetworkGraphPanel({
 
     let isMounted = true;
     setIsLoading(true);
+    setNetworkGraph(null);
 
     fetch(`${API_BASE_URL}/claims/${claimId}/network`)
       .then((res) => {
@@ -338,14 +339,14 @@ export function NetworkGraphPanel({
   // ── 3. EMPTY & LOADING INITIAL STATES ─────────────────────────────────
   if (!activeGraph && isLoading) {
     return (
-      <div className="flex h-full min-h-[500px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-[#E8E2D9] bg-[#FBF8F3] p-8 text-center shadow-inner">
-        <div className="relative mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border border-[#7C2D3E]/30 bg-[#7C2D3E]/10 p-4">
-          <Loader2 className="h-10 w-10 text-[#7C2D3E] animate-spin" />
+      <div className="flex h-full min-h-[500px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-app-line bg-app-canvas p-8 text-center shadow-inner">
+        <div className="relative mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border border-app-primary bg-app-primary-fill p-4">
+          <Loader2 className="h-10 w-10 text-app-primary animate-spin" />
         </div>
-        <h3 className="font-serif text-lg font-bold text-[#2D2926] mb-2">
+        <h3 className="font-heading text-lg font-bold text-app-ink mb-2">
           Loading Network Topology...
         </h3>
-        <p className="max-w-md text-sm text-[#6B635B] font-sans leading-relaxed mb-4">
+        <p className="max-w-md text-sm text-app-muted font-sans leading-relaxed mb-4">
           Fetching claim relationship network from AgriGuard backend...
         </p>
       </div>
@@ -354,17 +355,17 @@ export function NetworkGraphPanel({
 
   if (!activeGraph || nodes.length === 0) {
     return (
-      <div className="flex h-full min-h-[500px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-[#E8E2D9] bg-[#FBF8F3] p-8 text-center shadow-inner">
-        <div className="relative mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border border-[#7C2D3E]/30 bg-[#7C2D3E]/10 p-4">
-          <Network className="h-10 w-10 text-[#7C2D3E] animate-pulse" />
+      <div className="flex h-full min-h-[500px] w-full flex-col items-center justify-center rounded-xl border border-dashed border-app-line bg-app-canvas p-8 text-center shadow-inner">
+        <div className="relative mb-5 flex h-20 w-20 items-center justify-center rounded-2xl border border-app-primary bg-app-primary-fill p-4">
+          <Network className="h-10 w-10 text-app-primary animate-pulse" />
         </div>
-        <h3 className="font-serif text-lg font-bold text-[#2D2926] mb-2">
+        <h3 className="font-heading text-lg font-bold text-app-ink mb-2">
           Network Topology Analyzer
         </h3>
-        <p className="max-w-md text-sm text-[#6B635B] font-sans leading-relaxed mb-4">
+        <p className="max-w-md text-sm text-app-muted font-sans leading-relaxed mb-4">
           Select a claim from the ledger to inspect graph topology, shared adjuster connections, and collusion subgraphs.
         </p>
-        <div className="flex items-center gap-2 rounded-lg bg-white px-3.5 py-2 text-xs font-mono text-[#6B635B] border border-[#E8E2D9] shadow-sm">
+        <div className="flex items-center gap-2 rounded-lg bg-app-panel px-3.5 py-2 text-xs font-mono text-app-muted border border-app-line shadow-sm">
           <span>Awaiting claim network data...</span>
         </div>
       </div>
@@ -374,25 +375,25 @@ export function NetworkGraphPanel({
   const hoveredNode = nodes.find((n: any) => n.id === hoveredNodeId);
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#FBF8F3] text-[#2D2926] rounded-xl border border-[#E8E2D9] shadow-sm overflow-hidden font-sans select-none relative">
+    <div className="flex flex-col h-full w-full bg-app-canvas text-app-ink rounded-xl border border-app-line shadow-sm overflow-hidden font-sans select-none relative">
       
       {/* ── TOP GRAPH CONTROL BAR ─────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E8E2D9] bg-white px-4 py-3 z-10">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app-line bg-app-panel px-4 py-3 z-10">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#7C2D3E]/10 text-[#7C2D3E] border border-[#7C2D3E]/20">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-app-primary-soft text-app-primary border border-app-primary">
             <Network className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="font-serif text-sm font-bold text-[#2D2926] flex items-center gap-2">
+            <h3 className="font-heading text-sm font-bold text-app-ink flex items-center gap-2">
               Graph Topology &amp; Collusion Network
               {isLoading && (
-                <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#C17C2A]/15 text-[#C17C2A] border border-[#C17C2A]/30 text-[10px] font-mono animate-pulse">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#C17C2A] animate-ping inline-block" />
+                <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-app-review-soft text-app-review border border-app-review text-[10px] font-mono animate-pulse">
+                  <span className="h-1.5 w-1.5 rounded-full bg-app-review animate-ping inline-block" />
                   Loading...
                 </span>
               )}
             </h3>
-            <p className="text-[11px] text-[#6B635B] font-mono">
+            <p className="text-[11px] text-app-muted font-mono">
               {nodes.length} Nodes • {edges.length} Edges • Claim: {claimId || 'N/A'}
             </p>
           </div>
@@ -404,8 +405,8 @@ export function NetworkGraphPanel({
             onClick={() => setShowAnomalousOnly(!showAnomalousOnly)}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium border transition-all ${
               showAnomalousOnly
-                ? 'bg-[#B84233]/10 text-[#B84233] border-[#B84233]/30 shadow-sm'
-                : 'bg-[#FBF8F3] text-[#6B635B] border-[#E8E2D9] hover:text-[#2D2926]'
+                ? 'bg-app-investigate-soft text-app-investigate border-app-investigate shadow-sm'
+                : 'bg-app-canvas text-app-muted border-app-line hover:text-app-ink'
             }`}
           >
             <AlertTriangle className="h-3.5 w-3.5" />
@@ -416,32 +417,32 @@ export function NetworkGraphPanel({
             onClick={() => setShowLabels(!showLabels)}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium border transition-all ${
               showLabels
-                ? 'bg-[#7C2D3E]/10 text-[#7C2D3E] border-[#7C2D3E]/30'
-                : 'bg-[#FBF8F3] text-[#6B635B] border-[#E8E2D9] hover:text-[#2D2926]'
+                ? 'bg-app-primary-soft text-app-primary border-app-primary'
+                : 'bg-app-canvas text-app-muted border-app-line hover:text-app-ink'
             }`}
           >
             <Eye className="h-3.5 w-3.5" />
             <span>Labels</span>
           </button>
 
-          <div className="flex items-center border border-[#E8E2D9] rounded-lg bg-[#FBF8F3] p-0.5">
+          <div className="flex items-center border border-app-line rounded-lg bg-app-canvas p-0.5">
             <button
               onClick={() => setZoomLevel((z) => Math.min(2, z + 0.15))}
-              className="p-1 text-[#6B635B] hover:text-[#2D2926] rounded transition-colors"
+              className="p-1 text-app-muted hover:text-app-ink rounded transition-colors"
               title="Zoom In"
             >
               <ZoomIn className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => setZoomLevel((z) => Math.max(0.6, z - 0.15))}
-              className="p-1 text-[#6B635B] hover:text-[#2D2926] rounded transition-colors"
+              className="p-1 text-app-muted hover:text-app-ink rounded transition-colors"
               title="Zoom Out"
             >
               <ZoomOut className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={resetView}
-              className="p-1 text-[#6B635B] hover:text-[#2D2926] rounded transition-colors border-l border-[#E8E2D9]"
+              className="p-1 text-app-muted hover:text-app-ink rounded transition-colors border-l border-app-line"
               title="Reset View"
             >
               <RotateCcw className="h-3.5 w-3.5" />
@@ -453,7 +454,7 @@ export function NetworkGraphPanel({
       {/* ── CANVAS VIEWPORT & INTERACTIVE SVG TOPOLOGY ───────────────────── */}
       <div
         className="relative flex-1 w-full min-h-[460px] overflow-hidden cursor-grab active:cursor-grabbing"
-        style={{ backgroundColor: '#FAF7F2' }}
+        style={{ backgroundColor: 'var(--ag-page)' }}
         onMouseDown={handleStartPan}
         onMouseMove={handleMouseMoveCanvas}
         onMouseUp={handleMouseUpCanvas}
@@ -462,7 +463,7 @@ export function NetworkGraphPanel({
         <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30">
           <defs>
             <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#E8E2D9" strokeWidth="0.5" />
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--ag-border)" strokeWidth="0.5" />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#grid)" />
@@ -497,7 +498,7 @@ export function NetworkGraphPanel({
                       y1={sourcePos.y}
                       x2={targetPos.x}
                       y2={targetPos.y}
-                      stroke="#B84233"
+                      stroke="var(--ag-investigate)"
                       strokeWidth={isHighlighted ? 6 : 4}
                       strokeOpacity="0.3"
                     />
@@ -511,10 +512,10 @@ export function NetworkGraphPanel({
                     y2={targetPos.y}
                     stroke={
                       edge.isAnomalous
-                        ? '#B84233'
+                        ? 'var(--ag-investigate)'
                         : isHighlighted
-                        ? '#7C2D3E'
-                        : '#D4CCC3'
+                        ? 'var(--ag-primary)'
+                        : 'var(--ag-border)'
                     }
                     strokeWidth={edge.isAnomalous ? 2.5 : isHighlighted ? 2.5 : 1.5}
                     strokeDasharray={edge.isAnomalous ? '6,4' : 'none'}
@@ -536,15 +537,15 @@ export function NetworkGraphPanel({
                         width="64"
                         height="18"
                         rx="4"
-                        fill="#FFFFFF"
-                        stroke={edge.isAnomalous ? '#B84233' : '#E8E2D9'}
+                        fill="var(--ag-panel)"
+                        stroke={edge.isAnomalous ? 'var(--ag-investigate)' : 'var(--ag-border)'}
                         strokeWidth="1"
                       />
                       <text
                         x="0"
                         y="2"
                         textAnchor="middle"
-                        fill={edge.isAnomalous ? '#B84233' : '#6B635B'}
+                        fill={edge.isAnomalous ? 'var(--ag-investigate)' : 'var(--ag-muted)'}
                         fontSize="9"
                         fontFamily="monospace"
                         fontWeight="bold"
@@ -565,33 +566,33 @@ export function NetworkGraphPanel({
               const isAssessorHub = node.kind === 'assessor' || node.type === 'assessor';
 
               // Theme palette matching entity type — warm editorial colors
-              let fillBg = '#FFFFFF';
-              let strokeColor = '#D4CCC3';
-              let iconColor = '#6B635B';
+              let fillBg = 'var(--ag-panel)';
+              let strokeColor = 'var(--ag-border)';
+              let iconColor = 'var(--ag-muted)';
 
               const nodeKind = node.kind || node.type;
               switch (nodeKind) {
                 case 'claim':
                   const isHighRisk = node.riskTier === 'investigate' || (typeof node.risk_score === 'number' && node.risk_score >= 70);
-                  fillBg = isHighRisk ? '#FFFFFF' : '#FFFFFF';
-                  strokeColor = isHighRisk ? '#7C2D3E' : '#5B7553';
-                  iconColor = isHighRisk ? '#7C2D3E' : '#5B7553';
+                  fillBg = 'var(--ag-panel)';
+                  strokeColor = isHighRisk ? 'var(--ag-investigate)' : 'var(--ag-safe)';
+                  iconColor = isHighRisk ? 'var(--ag-investigate)' : 'var(--ag-safe)';
                   break;
                 case 'farmer':
-                  fillBg = '#FBF8F3';
-                  strokeColor = '#5B7553';
-                  iconColor = '#5B7553';
+                  fillBg = 'var(--ag-panel-soft)';
+                  strokeColor = 'var(--ag-safe)';
+                  iconColor = 'var(--ag-safe)';
                   break;
                 case 'assessor':
-                  fillBg = '#FBF8F3';
-                  strokeColor = '#C17C2A';
-                  iconColor = '#C17C2A';
+                  fillBg = 'var(--ag-panel-soft)';
+                  strokeColor = 'var(--ag-review)';
+                  iconColor = 'var(--ag-review)';
                   break;
                 case 'zone':
                 case 'farmland':
-                  fillBg = '#FBF8F3';
-                  strokeColor = '#8B9A6E';
-                  iconColor = '#8B9A6E';
+                  fillBg = 'var(--ag-panel-soft)';
+                  strokeColor = 'var(--ag-safe)';
+                  iconColor = 'var(--ag-safe)';
                   break;
               }
 
@@ -608,14 +609,14 @@ export function NetworkGraphPanel({
                       selectClaim(node.id);
                     }
                   }}
-                  className="cursor-pointer transition-transform hover:scale-110"
+                  className="cursor-pointer"
                 >
                   {/* Outer Pulsing Glow for High Risk / Assessor Hub */}
                   {(isAssessorHub || isSelected || isHovered) && (
                     <circle
                       r={isAssessorHub ? 32 : 28}
                       fill="none"
-                      stroke={isAssessorHub ? '#C17C2A' : strokeColor}
+                      stroke={isAssessorHub ? 'var(--ag-review)' : strokeColor}
                       strokeWidth="2"
                       strokeOpacity="0.4"
                     />
@@ -625,7 +626,7 @@ export function NetworkGraphPanel({
                   <circle
                     r={isSelected ? 24 : 20}
                     fill={fillBg}
-                    stroke={isHovered ? '#2D2926' : strokeColor}
+                    stroke={isHovered ? 'var(--ag-ink)' : strokeColor}
                     strokeWidth={isSelected ? 3 : 2}
                     className="shadow-lg transition-all"
                   />
@@ -647,16 +648,16 @@ export function NetworkGraphPanel({
                         width="96"
                         height="18"
                         rx="4"
-                        fill="#FFFFFF"
+                        fill="var(--ag-panel)"
                         fillOpacity="0.95"
-                        stroke="#E8E2D9"
+                        stroke="var(--ag-border)"
                         strokeWidth="0.8"
                       />
                       <text
                         x="0"
                         y="2"
                         textAnchor="middle"
-                        fill="#2D2926"
+                        fill="var(--ag-ink)"
                         fontSize="10"
                         fontFamily="sans-serif"
                         fontWeight="600"
@@ -674,29 +675,29 @@ export function NetworkGraphPanel({
 
         {/* ── DYNAMIC HOVER TOOLTIP IN OVERLAY ──────────────────────────────── */}
         {hoveredNode && (
-          <div className="absolute bottom-4 left-4 z-20 max-w-xs rounded-xl border border-[#E8E2D9] bg-white p-3.5 text-xs text-[#2D2926] shadow-lg space-y-2 pointer-events-none">
-            <div className="flex items-center justify-between border-b border-[#E8E2D9] pb-2">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#7C2D3E]">
+          <div className="absolute bottom-4 left-4 z-20 max-w-xs rounded-xl border border-app-line bg-app-panel p-3.5 text-xs text-app-ink shadow-lg space-y-2 pointer-events-none">
+            <div className="flex items-center justify-between border-b border-app-line pb-2">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-app-primary">
                 {formatNodeKind(hoveredNode.kind || hoveredNode.type)}
               </span>
               {hoveredNode.riskTier && (
-                <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${hoveredNode.riskTier === 'investigate' ? 'bg-[#B84233]/10 text-[#B84233]' : 'bg-[#5B7553]/10 text-[#5B7553]'}`}>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${hoveredNode.riskTier === 'investigate' ? 'bg-app-investigate-soft text-app-investigate' : 'bg-app-safe-soft text-app-safe'}`}>
                   {hoveredNode.riskTier}
                 </span>
               )}
             </div>
 
-            <div className="font-semibold text-sm text-[#2D2926]">
+            <div className="font-semibold text-sm text-app-ink">
               {hoveredNode.label}
             </div>
 
-            <div className="text-[11px] text-[#6B635B] font-mono space-y-1">
-              <div>ID: <span className="text-[#2D2926]">{hoveredNode.id}</span></div>
+            <div className="text-[11px] text-app-muted font-mono space-y-1">
+              <div>ID: <span className="text-app-ink">{hoveredNode.id}</span></div>
               {hoveredNode.risk_score !== null && hoveredNode.risk_score !== undefined && (
-                <div>Risk Score: <span className="text-[#C17C2A] font-bold">{formatRiskPercent(hoveredNode.risk_score)}</span></div>
+                <div>Risk Score: <span className="text-app-review font-bold">{formatRiskPercent(hoveredNode.risk_score)}</span></div>
               )}
               {hoveredNode.communityClusterId && (
-                <div>Community Cluster: <span className="text-[#5B7553]">{hoveredNode.communityClusterId}</span></div>
+                <div>Community Cluster: <span className="text-app-safe">{hoveredNode.communityClusterId}</span></div>
               )}
             </div>
           </div>
@@ -704,31 +705,31 @@ export function NetworkGraphPanel({
       </div>
 
       {/* ── BOTTOM LEGEND FOOTER ─────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E8E2D9] bg-[#FBF8F3] px-4 py-2.5 text-xs font-mono text-[#6B635B]">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-app-line bg-app-canvas px-4 py-2.5 text-xs font-mono text-app-muted">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-full bg-[#FBF8F3] border-2 border-[#5B7553]" />
+            <span className="h-3 w-3 rounded-full bg-app-canvas border-2 border-app-safe" />
             <span>Producer</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-full bg-[#FBF8F3] border-2 border-[#C17C2A]" />
+            <span className="h-3 w-3 rounded-full bg-app-canvas border-2 border-app-review" />
             <span>Adjuster Hub</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-full bg-white border-2 border-[#5B7553]" />
+            <span className="h-3 w-3 rounded-full bg-app-panel border-2 border-app-safe" />
             <span>Claim Entity</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-full bg-[#FBF8F3] border-2 border-[#8B9A6E]" />
+            <span className="h-3 w-3 rounded-full bg-app-canvas border-2 border-app-safe" />
             <span>PMFBY Zone / Parcel</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-2.5 w-5 bg-[#B84233] rounded animate-pulse" />
-            <span className="text-[#B84233] font-bold">Flagged Collusion Link</span>
+            <span className="h-2.5 w-5 bg-app-investigate rounded animate-pulse" />
+            <span className="text-app-investigate font-bold">Flagged Collusion Link</span>
           </div>
         </div>
 
-        <div className="text-[11px] text-[#6B635B]">
+        <div className="text-[11px] text-app-muted">
           Drag nodes to rearrange • Click claim node to inspect
         </div>
       </div>

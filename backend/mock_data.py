@@ -7,6 +7,7 @@ import os
 import sys
 import pandas as pd
 from typing import Dict, Any, List, Set, Optional
+from datetime import date, timedelta
 
 try:
     from schemas import NetworkGraph, NetworkNode, NetworkEdge
@@ -24,6 +25,25 @@ POSSIBLE_DIRS = [
 
 DATA_DIR = next((d for d in POSSIBLE_DIRS if os.path.exists(os.path.join(d, "claims.csv"))), POSSIBLE_DIRS[0])
 
+# Location names are deterministic demo talukas selected within each producer district.
+DEMO_TALUKAS = {
+    "Akola": ["Akot", "Balapur", "Murtijapur", "Patur"],
+    "Beed": ["Georai", "Ashti", "Parli", "Ambajogai"],
+    "Jalna": ["Ambad", "Bhokardan", "Partur", "Badnapur"],
+    "Latur": ["Udgir", "Ausa", "Nilanga", "Ahmedpur"],
+    "Nashik": ["Niphad", "Sinnar", "Dindori", "Yeola"],
+    "Pune": ["Baramati", "Shirur", "Junnar", "Indapur", "Daund"],
+    "Sangli": ["Miraj", "Tasgaon", "Vita", "Jat"],
+    "Satara": ["Karad", "Wai", "Phaltan", "Patan"],
+    "Solapur": ["Pandharpur", "Barshi", "Akkalkot", "Karmala"],
+    "Yavatmal": ["Pusad", "Darwha", "Umarkhed", "Digras"],
+}
+
+def demo_taluka(district: str, farmer_id: str) -> str:
+    options = DEMO_TALUKAS.get(district, ["Rural Taluka"])
+    suffix = int("".join(ch for ch in farmer_id if ch.isdigit()) or "0")
+    return options[suffix % len(options)]
+
 # Load CSV files at startup
 claims_path = os.path.join(DATA_DIR, "claims.csv")
 farmers_path = os.path.join(DATA_DIR, "farmers.csv")
@@ -39,6 +59,10 @@ farmers_dict: Dict[str, str] = (
     dict(zip(farmers_df["farmer_id"].astype(str), farmers_df["name"].astype(str)))
     if not farmers_df.empty
     else {}
+)
+farmer_details: Dict[str, Dict[str, Any]] = (
+    {str(row["farmer_id"]): row.to_dict() for _, row in farmers_df.iterrows()}
+    if not farmers_df.empty else {}
 )
 farmer_to_family: Dict[str, str] = {}
 family_to_farmers: Dict[str, List[str]] = {}
@@ -59,6 +83,10 @@ assessors_dict: Dict[str, str] = (
     else {}
 )
 
+# Weather-zone metadata is part of the bundled synthetic demo dataset.
+zones_path = os.path.join(DATA_DIR, "weather_zones.csv")
+zones_df = pd.read_csv(zones_path) if os.path.exists(zones_path) else pd.DataFrame()
+zones_dict = {str(row["zone_id"]): row.to_dict() for _, row in zones_df.iterrows()} if not zones_df.empty else {}
 # 3. Claim scores mapping
 scores_dict: Dict[str, Dict[str, Any]] = {}
 if os.path.exists(claim_scores_path):
@@ -129,6 +157,7 @@ for _, c_row in claims_df.iterrows():
     payout = float(c_row["claimed_payout_amount"])
 
     farmer_name = farmers_dict.get(fid, fid)
+    farmer_info = farmer_details.get(fid, {})
     assessor_name = assessors_dict.get(aid, aid)
 
     score_info = scores_dict.get(cid, {})
@@ -146,8 +175,14 @@ for _, c_row in claims_df.iterrows():
         "farmer_name": farmer_name,
         "assessor_name": assessor_name,
         "crop_type": crop,
+        "claimed_damage_pct": float(c_row.get("claimed_damage_pct", 0.0)),
+        "insured_acres": float(farmer_info.get("land_holding_acres", 0.0)),
+        "taluka": demo_taluka(str(farmer_info.get("district", "")), fid),
+        "district": str(farmer_info.get("district", "")),
+        "peril_type": str(zones_dict.get(zid, {}).get("event_type", "Weather event")),
+        "zone_severity": float(zones_dict.get(zid, {}).get("severity_index", 0.0)),
         "claimed_payout_amount": payout,
-        "claim_date": "2025-10-01",  # Fixed placeholder date per specification
+        "claim_date": (date(2024, 6, 1) + timedelta(days=(int(cid[1:]) * 17) % 210)).isoformat(),
         "risk_score": risk_score,
         "triage_tier": triage_tier,
         "farmer_id": fid,
@@ -159,7 +194,13 @@ for _, c_row in claims_df.iterrows():
         "proof_trace": proof_trace,
         "rules_fired": rules_fired,
         "risk_flag": risk_flag,
+        "policy_number": f"PMFBY-MH-2024-25-{cid}",
+        "inspection_date": "",
+        "crop_year": 2024,
+        "policy_value": payout / max(float(c_row.get("claimed_damage_pct", 0.0)) / 100.0, 0.2),
+        "gnn_available": False,
     }
+    claim_record["inspection_date"] = (date.fromisoformat(claim_record["claim_date"]) + timedelta(days=7 + (int(cid[1:]) % 8))).isoformat()
     # Note: is_fraud is NEVER included in claim_record or exposed
     MOCK_CLAIMS_RAW.append(claim_record)
 

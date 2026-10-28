@@ -73,13 +73,13 @@
   --color-pillar-gnn: #5B7553;
 
   /* ── Surface ── */
-  --color-surface-primary: #FBF8F3;
-  --color-surface-secondary: #F3EDE4;
+  --color-surface-primary: #F6F8F5;
+  --color-surface-secondary: #EFF2EE;
   --color-surface-elevated: #FFFFFF;
 
   /* ── Typography ── */
-  --font-sans: 'IBM Plex Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
-  --font-heading: 'Space Grotesk', 'IBM Plex Sans', sans-serif;
+  --font-sans: 'DM Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Manrope', 'DM Sans', 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
 }
 
@@ -89,8 +89,9 @@ h1, h2, h3, h4, h5, h6 {
 
 html {
   font-family: var(--font-sans);
-  background-color: var(--color-surface-primary);
-  color: var(--color-cream-900);
+  background-color: var(--ag-page);
+  color: var(--ag-ink);
+  color-scheme: light;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -110,14 +111,171 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-cream-200);
+  background: var(--ag-page-soft);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-cream-500);
+  background: var(--ag-border);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-cream-600);
+  background: var(--ag-muted);
 }
+
+
+:root {
+  --ag-sidebar: #050504;
+  --ag-page: #F5F5F5;
+  --ag-page-soft: #EEEEEC;
+  --ag-panel: #FFFFFF;
+  --ag-panel-soft: #FAFAF9;
+  --ag-track: #E8E8E6;
+  --ag-border: #E1E1DF;
+  --ag-ink: #171715;
+  --ag-muted: #595958;
+  --ag-subtle: #818180;
+  --ag-primary: #16712E;
+  --ag-primary-fill: #16712E;
+  --ag-primary-hover: #258F3D;
+  --ag-primary-soft: #E8F3EB;
+  --ag-investigate: #B84233;
+  --ag-investigate-fill: #B84233;
+  --ag-investigate-soft: #F9E7E4;
+  --ag-review: #9F7F50;
+  --ag-review-fill: #9F7F50;
+  --ag-review-soft: #F3EEE6;
+  --ag-safe: #16712E;
+  --ag-safe-fill: #16712E;
+  --ag-safe-soft: #E8F3EB;
+}
+
+body {
+  background: var(--ag-page);
+}
+
+button, input, textarea {
+  font: inherit;
+}
+
+button:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--ag-primary);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: #ABD9BD;
+  color: #050504;
+}
+
+@media (max-width: 900px) {
+  .dashboard-shell { min-width: 360px; }
+  .dashboard-sidebar { width: 68px; flex: 0 0 68px; }
+  .dashboard-sidebar-label, .dashboard-brand-copy, .dashboard-quick-metrics, .dashboard-sidebar-footer > div:first-child { display: none; }
+  .dashboard-sidebar nav button { justify-content: center; padding-inline: 0; }
+  .dashboard-sidebar nav { padding-inline: 8px; }
+  .claims-main { min-width: 0 !important; width: 100% !important; }
+  .claim-inspector { position: absolute; inset: 0 0 0 68px; z-index: 35; width: auto !important; min-width: 0 !important; max-width: none !important; box-shadow: -16px 0 40px rgb(24 40 28 / 12%); }
+  .claims-table-scroll { overflow-x: auto; }
+  .claims-table-scroll table { min-width: 900px; }
+}
+
+@media (max-width: 640px) {
+  .dashboard-topbar { padding-inline: 12px !important; }
+  .dashboard-top-title { display: none; }
+  .dashboard-top-actions { gap: 6px !important; }
+  .dashboard-top-actions > div:nth-child(-n+4) { display: none; }
+  .dashboard-top-actions button > span { display: none; }
+  .dashboard-top-actions button { padding-inline: 9px !important; }
+  .dashboard-topbar { height: 56px !important; }
+  .dashboard-topbar > div:first-child > span { display: none; }
+  .analytics-content { padding: 16px !important; }
+  .claim-inspector {
+    position: absolute;
+    inset: 0 0 0 68px;
+    z-index: 40;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    box-shadow: -16px 0 40px rgb(24 40 28 / 12%);
+  }
+}
+
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ag-sidebar: #1B1C1A;
+  --ag-page: #1B1C1A;
+  --ag-page-soft: #20211F;
+  --ag-panel: #242523;
+  --ag-panel-soft: #292A28;
+  --ag-track: #343532;
+  --ag-border: #3A3B38;
+  --ag-ink: #F3F3F1;
+  --ag-muted: #B8B9B7;
+  --ag-subtle: #939492;
+  --ag-primary: #ABD9BD;
+  --ag-primary-fill: #16712E;
+  --ag-primary-hover: #258F3D;
+  --ag-primary-soft: #102018;
+  --ag-investigate: #FF9A8D;
+  --ag-investigate-fill: #823B33;
+  --ag-investigate-soft: #3D2927;
+  --ag-review: #C6A77B;
+  --ag-review-fill: #6D5738;
+  --ag-review-soft: #29231B;
+  --ag-safe: #ABD9BD;
+  --ag-safe-fill: #16712E;
+  --ag-safe-soft: #0E1C12;
+}
+
+.bg-app-sidebar { background-color: var(--ag-sidebar) !important; }
+.bg-app-canvas { background-color: var(--ag-page) !important; }
+.bg-app-panel { background-color: var(--ag-panel) !important; }
+.bg-app-panel-soft { background-color: var(--ag-panel-soft) !important; }
+.bg-app-track { background-color: var(--ag-track) !important; }
+.text-app-ink { color: var(--ag-ink) !important; }
+.text-app-muted { color: var(--ag-muted) !important; }
+.text-app-subtle { color: var(--ag-subtle) !important; }
+.border-app-line { border-color: var(--ag-border) !important; }
+.bg-app-primary-fill { background-color: var(--ag-primary-fill) !important; }
+.bg-app-primary-soft { background-color: var(--ag-primary-soft) !important; }
+.text-app-primary { color: var(--ag-primary) !important; }
+.border-app-primary { border-color: var(--ag-primary) !important; }
+.bg-app-investigate { background-color: var(--ag-investigate-fill) !important; }
+.bg-app-investigate-soft { background-color: var(--ag-investigate-soft) !important; }
+.text-app-investigate { color: var(--ag-investigate) !important; }
+.border-app-investigate, .border-app-investigate-soft { border-color: var(--ag-investigate) !important; }
+.bg-app-review { background-color: var(--ag-review-fill) !important; }
+.bg-app-review-soft { background-color: var(--ag-review-soft) !important; }
+.text-app-review { color: var(--ag-review) !important; }
+.border-app-review { border-color: var(--ag-review) !important; }
+.bg-app-safe { background-color: var(--ag-safe-fill) !important; }
+.bg-app-safe-soft { background-color: var(--ag-safe-soft) !important; }
+.text-app-safe { color: var(--ag-safe) !important; }
+.border-app-safe { border-color: var(--ag-safe) !important; }
+.placeholder-app-muted::placeholder { color: var(--ag-muted) !important; }
+.placeholder-app-subtle::placeholder { color: var(--ag-subtle) !important; }
+.ring-app-primary { --tw-ring-color: var(--ag-primary) !important; }
+.hover\:bg-app-canvas:hover { background-color: var(--ag-page) !important; }
+.hover\:bg-app-panel:hover { background-color: var(--ag-panel) !important; }
+.hover\:bg-app-panel-soft:hover { background-color: var(--ag-panel-soft) !important; }
+.hover\:bg-app-primary-soft:hover { background-color: var(--ag-primary-soft) !important; }
+.hover\:bg-app-primary-hover:hover { background-color: var(--ag-primary-hover) !important; }
+.hover\:bg-app-investigate-soft:hover { background-color: var(--ag-investigate-soft) !important; }
+.hover\:bg-app-review-soft:hover { background-color: var(--ag-review-soft) !important; }
+.hover\:bg-app-safe-soft:hover { background-color: var(--ag-safe-soft) !important; }
+
+table { font-family: var(--font-sans); }
+
+.fill-app-review { fill: var(--ag-review) !important; }
+.border-l-app-investigate { border-left-color: var(--ag-investigate) !important; }
+.border-l-app-review { border-left-color: var(--ag-review) !important; }
+.border-l-app-line { border-left-color: var(--ag-border) !important; }
+.hover\:border-app-primary:hover { border-color: var(--ag-primary) !important; }
+
+
+/* Keep the inspector compact while letting the claims table carry the scan hierarchy. */
+.claim-inspector .text-xs { font-size: 11px !important; }
+.claim-inspector .text-sm { font-size: 13px !important; }
+.claim-inspector .text-base { font-size: 14px !important; }

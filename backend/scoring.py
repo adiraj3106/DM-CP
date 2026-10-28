@@ -1,5 +1,5 @@
 """
-AgriGuard Scoring Engine (Stub)
+AgriGuard Scoring Adapter
 ===============================================================================
 This module serves as the boundary between the API presentation layer and
 the internal machine learning pipeline (GNN model + symbolic inference).
@@ -41,7 +41,7 @@ def derive_triage_tier(risk_score: float) -> TriageTier:
 
 def compute_claim_risk(claim_data: Dict[str, Any]) -> Tuple[float, TriageTier, ExplainabilityNotes]:
     """
-    Internal ML scoring function stub.
+    Scoring adapter using the bundled precomputed portfolio scores.
 
     Args:
         claim_data: Dictionary containing claim metadata (crop, payout, peril, assessor, etc.)
@@ -65,17 +65,17 @@ def compute_claim_risk(claim_data: Dict[str, Any]) -> Tuple[float, TriageTier, E
     if tier == TriageTier.INVESTIGATE:
         graph_note = default_notes.get(
             "graph_note",
-            "GNN flagged dense co-assessment cluster with adjacent claims exhibiting identical damage timelines."
+            "Precomputed graph-risk score placed this claim in the investigate tier; no trained model inference is connected."
         )
     elif tier == TriageTier.REVIEW:
         graph_note = default_notes.get(
             "graph_note",
-            "Graph topology shows standard regional clustering with minor repeat assessor overlap."
+            "Precomputed graph-risk score placed this claim in the review tier; inspect the linked entities for context."
         )
     else:  # APPROVE
         graph_note = default_notes.get(
             "graph_note",
-            "Graph connectivity is sparse and normal; no suspicious multi-claim hubs or shared assessor anomalies."
+            "Precomputed graph-risk score placed this claim in the approve tier; this score is not a live model finding."
         )
 
     explainability = ExplainabilityNotes(

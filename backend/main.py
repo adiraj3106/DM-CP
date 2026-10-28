@@ -1,5 +1,5 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# AgriGuard — Agricultural Fraud Risk Analytics Backend (FastAPI Stub)
+# AgriGuard Agricultural Risk API
 #
 # QUICK START INSTRUCTIONS:
 #   1. Install dependencies:
@@ -50,8 +50,8 @@ except ImportError:
 app = FastAPI(
     title="AgriGuard API",
     description=(
-        "Agricultural crop insurance fraud risk analytics API. "
-        "Provides typed claim triage listings, GNN graph explainability, "
+        "Agricultural crop-insurance API with illustrative portfolio records. "
+        "Provides typed claim triage listings, precomputed graph-risk rationale, "
         "symbolic logic proof traces, and force-directed fraud collusion network subgraphs."
     ),
     version="1.0.0",
@@ -67,6 +67,8 @@ app = FastAPI(
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:8080",
@@ -107,7 +109,9 @@ def get_root():
     """Welcome endpoint providing health status and documentation links."""
     return {
         "status": "online",
-        "service": "AgriGuard Backend API (FastAPI Stub)",
+        "service": "AgriGuard API",
+        "dataset": "Illustrative Maharashtra PMFBY portfolio data",
+        "scoring": "Precomputed risk scores; trained GNN inference is not connected",
         "version": "1.0.0",
         "docs_url": "/docs",
         "endpoints": [
@@ -158,6 +162,20 @@ def list_claims() -> List[ClaimSummary]:
                 claim_date=raw["claim_date"],
                 risk_score=risk_score,
                 triage_tier=triage_tier,
+                policy_number=raw["policy_number"],
+                farmer_id=raw["farmer_id"],
+                assessor_id=raw["assessor_id"],
+                district=raw["district"],
+                taluka=raw["taluka"],
+                zone_id=raw["zone_id"],
+                peril_type=raw["peril_type"],
+                claimed_damage_pct=raw["claimed_damage_pct"],
+                insured_acres=raw["insured_acres"],
+                estimated_coverage=raw["policy_value"],
+                inspection_date=raw["inspection_date"],
+                crop_year=raw["crop_year"],
+                gnn_available=raw["gnn_available"],
+                risk_flag=raw.get("risk_flag", 0),
             )
         )
     return results
@@ -169,7 +187,7 @@ def list_claims() -> List[ClaimSummary]:
     summary="Get detailed claim by ID",
     description=(
         "Returns full detail for a single claim, including all base summary fields, "
-        "GNN graph_note, and symbolic inference proof_trace and rules_fired."
+        "precomputed graph-risk note, and symbolic inference proof_trace and rules_fired."
     ),
     tags=["Claims"],
 )
@@ -193,6 +211,21 @@ def get_claim_detail(claim_id: str) -> ClaimDetail:
         explainability=explainability,
         proof_trace=raw.get("proof_trace", []),
         rules_fired=raw.get("rules_fired", []),
+        policy_number=raw["policy_number"],
+        farmer_id=raw["farmer_id"],
+        assessor_id=raw["assessor_id"],
+        district=raw["district"],
+        taluka=raw["taluka"],
+        zone_id=raw["zone_id"],
+        peril_type=raw["peril_type"],
+        claimed_damage_pct=raw["claimed_damage_pct"],
+        insured_acres=raw["insured_acres"],
+        estimated_coverage=raw["policy_value"],
+        inspection_date=raw["inspection_date"],
+        crop_year=raw["crop_year"],
+        gnn_available=raw["gnn_available"],
+        risk_flag=raw.get("risk_flag", 0),
+        evidence_note="Illustrative portfolio data with precomputed scores; it is not connected to a trained GNN or live PMFBY records.",
     )
 
 

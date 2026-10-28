@@ -153,7 +153,7 @@ def run_symbolic_inference(claims_path: str, scores_path: str, output_csv_path: 
     claims_df = pd.read_csv(claims_path)
     scores_df = pd.read_csv(scores_path)
 
-    df = claims_df.merge(scores_df[["claim_id", "risk_score"]], on="claim_id", how="left")
+    df = claims_df.merge(scores_df[["claim_id", "risk_score", "triage_tier"]], on="claim_id", how="left")
 
     # 1. Proposition P: share of claim's assessor's OTHER claims with risk_score >= 70 is > 0.4
     df["R"] = df["risk_score"] >= 70.0
@@ -213,113 +213,96 @@ def run_symbolic_inference(claims_path: str, scores_path: str, output_csv_path: 
 
     for _, row in df.iterrows():
         cid = str(row["claim_id"])
-        P_val = bool(row["P"])
-        Q_val = bool(row["Q"])
-        R_val = bool(row["R"])
-        S_val = bool(row["S"])
-
+        P_val, Q_val = bool(row["P"]), bool(row["Q"])
+        R_val, S_val = bool(row["R"]), bool(row["S"])
         proof_steps: List[str] = []
         rules_fired: List[str] = []
 
-        def record(rule_name: str, step_trace: str):
+        def record(rule_name: str, trace: Optional[str]):
+            if not trace:
+                return
             rule_execution_counts[rule_name] += 1
             if rule_name not in rules_fired:
                 rules_fired.append(rule_name)
-            proof_steps.append(step_trace)
+            proof_steps.append(trace)
 
-        # Antecedent conditions
-        pq_conj = P_val and Q_val
-        ps_conj = P_val and S_val
-        rs_conj = R_val and S_val
-
+        pq_conj, ps_conj, rs_conj = P_val and Q_val, P_val and S_val, R_val and S_val
         risk_inferred = False
 
-        if pq_conj or ps_conj or rs_conj:
-            # At least one fraud antecedent holds
+        # The implication rules below are the project's explicit domain axioms.
+        # Only fire them when their antecedents are established by the row facts.
+        if pq_conj:
+            _, trace = conjunction("P", P_val, "Q", Q_val)
+            record("Conjunction", trace)
+            _, trace = simplification("P^Q", True, "P")
+            record("Simplification", trace)
+            _, trace = modus_ponens("(P^Q)->Risk", "P^Q", True, "Risk")
+            record("Modus Ponens", trace)
             risk_inferred = True
 
-            # Conjunction & Simplification
-            if ps_conj:
-                _, c_trace = conjunction("P", P_val, "S", S_val)
-                record("Conjunction", c_trace)
-                _, s_trace = simplification("P^S", True, "P (assessor cluster risk)")
-                record("Simplification", s_trace)
-                # Hypothetical Syllogism
-                record("Hypothetical Syllogism", trace_hs_ps)
-                # Modus Ponens: (P^S) -> Collusion
-                _, mp1 = modus_ponens("(P^S)->Collusion", "P^S", True, "Collusion")
-                record("Modus Ponens", mp1)
-                # Modus Ponens: Collusion -> Risk
-                _, mp2 = modus_ponens("Collusion->Risk", "Collusion", True, "Risk")
-                record("Modus Ponens", mp2)
-            elif pq_conj:
-                _, c_trace = conjunction("P", P_val, "Q", Q_val)
-                record("Conjunction", c_trace)
-                _, s_trace = simplification("P^Q", True, "Q (crop damage z-score > 1.5)")
-                record("Simplification", s_trace)
-                # Hypothetical Syllogism
-                record("Hypothetical Syllogism", trace_hs_pq_rev)
-                # Modus Ponens: (P^Q) -> Risk
-                _, mp = modus_ponens("(P^Q)->Risk", "P^Q", True, "Risk")
-                record("Modus Ponens", mp)
-            elif rs_conj:
-                _, c_trace = conjunction("R", R_val, "S", S_val)
-                record("Conjunction", c_trace)
-                _, s_trace = simplification("R^S", True, "R (GNN score >= 70)")
-                record("Simplification", s_trace)
-                # Hypothetical Syllogism
-                record("Hypothetical Syllogism", trace_hs_rs_rev)
-                # Modus Ponens: (R^S) -> Risk
-                _, mp = modus_ponens("(R^S)->Risk", "R^S", True, "Risk")
-                record("Modus Ponens", mp)
+        if ps_conj:
+            _, trace = conjunction("P", P_val, "S", S_val)
+            record("Conjunction", trace)
+            _, trace = simplification("P^S", True, "P")
+            record("Simplification", trace)
+            record("Hypothetical Syllogism", trace_hs_ps)
+            _, trace = modus_ponens("(P^S)->Collusion", "P^S", True, "Collusion")
+            record("Modus Ponens", trace)
+            _, trace = modus_ponens("Collusion->Risk", "Collusion", True, "Risk")
+            record("Modus Ponens", trace)
+            risk_inferred = True
 
-            # Addition: derive disjunction for Constructive Dilemma
-            active_conj = "P^S" if ps_conj else ("P^Q" if pq_conj else "R^S")
-            _, add_trace = addition(active_conj, True, "R^S" if active_conj != "R^S" else "P^Q")
-            record("Addition", add_trace)
+        if rs_conj:
+            _, trace = conjunction("R", R_val, "S", S_val)
+            record("Conjunction", trace)
+            _, trace = simplification("R^S", True, "R")
+            record("Simplification", trace)
+            record("Hypothetical Syllogism", trace_hs_rs_rev)
+            _, trace = modus_ponens("(R^S)->Risk", "R^S", True, "Risk")
+            record("Modus Ponens", trace)
+            risk_inferred = True
 
-            # Constructive Dilemma: ((P^Q)->Risk) ^ ((R^S)->Risk), (P^Q) v (R^S) => Risk
-            _, cd_trace = constructive_dilemma(("P^Q", "Risk"), ("R^S", "Risk"), ("P^Q", "R^S"), True)
-            record("Constructive Dilemma", cd_trace)
+        # Constructive dilemma is valid here: both implications are axioms and
+        # at least one side of their antecedent disjunction is established.
+        if pq_conj or rs_conj:
+            active = "P^Q" if pq_conj else "R^S"
+            other = "R^S" if pq_conj else "P^Q"
+            _, trace = addition(active, True, other)
+            record("Addition", trace)
+            _, trace = constructive_dilemma(
+                ("P^Q", "Risk"), ("R^S", "Risk"), ("P^Q", "R^S"), True
+            )
+            record("Constructive Dilemma", trace)
 
-            # Modus Ponens: Risk -> Review
-            _, mp_rev = modus_ponens("Risk->Review", "Risk", True, "Review")
-            record("Modus Ponens", mp_rev)
-
-            # Disjunctive Syllogism: Fast_Track_Approve v Review, ~Fast_Track_Approve => Review
-            _, ds_trace = disjunctive_syllogism(("Fast_Track_Approve", "Review"), "Fast_Track_Approve", True)
-            record("Disjunctive Syllogism", ds_trace)
-
-        else:
-            # Safe claim: No risk antecedents hold (~Risk)
-            risk_inferred = False
-
-            # Modus Tollens: Risk -> Review, ~Review true => ~Risk
-            _, mt_trace1 = modus_tollens("Risk->Review", "Risk", "Review", True)
-            record("Modus Tollens", mt_trace1)
-
-            # Modus Tollens: (P^Q) -> Risk, ~Risk true => ~(P^Q)
-            _, mt_trace2 = modus_tollens("(P^Q)->Risk", "P^Q", "Risk", True)
-            record("Modus Tollens", mt_trace2)
-
-            # Destructive Dilemma: ((P^Q)->Risk) ^ ((R^S)->Risk), ~Risk v ~Risk => ~(P^Q) v ~(R^S)
-            _, dd_trace = destructive_dilemma(("P^Q", "Risk"), ("R^S", "Risk"), ("Risk", "Risk"), True)
-            record("Destructive Dilemma", dd_trace)
-
-            # Disjunctive Syllogism: Approve v Review, ~Review true => Approve
-            _, ds_trace = disjunctive_syllogism(("Approve", "Review"), "Review", True)
-            record("Disjunctive Syllogism", ds_trace)
-
-            # Addition: ~Risk true => ~Risk v Fast_Track
-            _, add_trace = addition("~Risk", True, "Fast_Track")
-            record("Addition", add_trace)
-
-            # Simplification: (Approve ^ Normal_Bounds) true => Approve
-            _, simp_trace = simplification("Approve ^ Normal_Bounds", True, "Approve")
-            record("Simplification", simp_trace)
+        # Risk -> Review is applied only after Risk has actually been derived.
+        if risk_inferred:
+            _, trace = modus_ponens("Risk->Review", "Risk", True, "Review")
+            record("Modus Ponens", trace)
+        elif str(row["triage_tier"]) == "approve":
+            # In this demo's mutually exclusive triage labels, Approve entails
+            # ~Review. This is an explicit observed routing premise, not an
+            # assumption made merely because a trigger was absent.
+            proof_steps.append("Observed routing premise: the mutually exclusive Approve tier entails ~Review.")
+            _, trace = modus_tollens("Risk->Review", "Risk", "Review", True)
+            record("Modus Tollens", trace)
+            _, trace = modus_tollens("(P^Q)->Risk", "P^Q", "Risk", True)
+            record("Modus Tollens", trace)
+            _, trace = modus_tollens("(R^S)->Risk", "R^S", "Risk", True)
+            record("Modus Tollens", trace)
+            _, trace = addition("Approve", True, "Review")
+            record("Addition", trace)
+            conclusion, trace = disjunctive_syllogism(("Approve", "Review"), "Review", True)
+            record("Disjunctive Syllogism", trace)
+            _, trace = addition("~Risk", True, "~Risk")
+            record("Addition", trace)
+            _, trace = destructive_dilemma(
+                ("P^Q", "Risk"), ("R^S", "Risk"), ("Risk", "Risk"), True
+            )
+            record("Destructive Dilemma", trace)
 
         results.append({
             "claim_id": cid,
+            # 0 means no listed risk antecedent fired; it is not a proof of ~Risk.
             "risk_flag": 1 if risk_inferred else 0,
             "rules_fired": "; ".join(rules_fired),
             "proof_trace": " | ".join(proof_steps),
@@ -329,6 +312,7 @@ def run_symbolic_inference(claims_path: str, scores_path: str, output_csv_path: 
 
     proofs_df = pd.DataFrame(results)
 
+    # Print how often each valid inference rule fires; unsupported negations are never assumed.
     # Print how often each rule fires
     print("\n" + "=" * 62)
     print("         SYMBOLIC INFERENCE RULE EXECUTION FREQUENCIES        ")
@@ -339,8 +323,8 @@ def run_symbolic_inference(claims_path: str, scores_path: str, output_csv_path: 
 
     # Evaluate on TEST claims only
     test_df = proofs_df[proofs_df["split"] == "test"]
-    prec = precision_score(test_df["is_fraud"], test_df["risk_flag"])
-    rec = recall_score(test_df["is_fraud"], test_df["risk_flag"])
+    prec = precision_score(test_df["is_fraud"], test_df["risk_flag"], zero_division=0)
+    rec = recall_score(test_df["is_fraud"], test_df["risk_flag"], zero_division=0)
 
     print("=" * 62)
     print("           TEST SPLIT EVALUATION (TEST CLAIMS ONLY)           ")

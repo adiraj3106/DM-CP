@@ -3,6 +3,7 @@ Verification test suite for AgriGuard FastAPI backend.
 """
 import sys
 import os
+from datetime import date
 
 # Add workspace root to sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -35,7 +36,7 @@ def test_list_claims():
         assert required_keys.issubset(claim.keys()), f"Missing keys in {claim}"
         assert 0.0 <= claim["risk_score"] <= 100.0
         assert claim["triage_tier"] in ["approve", "review", "investigate"]
-        assert claim["claim_date"] == "2025-10-01", f"Expected placeholder claim_date '2025-10-01', got {claim['claim_date']}"
+        date.fromisoformat(claim["claim_date"])
         assert "is_fraud" not in claim, "is_fraud must never be exposed"
         assert "fraud_type" not in claim, "fraud_type must never be exposed"
 
@@ -56,7 +57,7 @@ def test_claim_detail():
     assert res.status_code == 200
     data = res.json()
     assert data["claim_id"] == first_claim_id
-    assert data["claim_date"] == "2025-10-01"
+    assert data["claim_date"] == next(c["claim_date"] for c in list_res.json() if c["claim_id"] == first_claim_id)
     assert "is_fraud" not in data, "is_fraud must never be exposed"
     assert "explainability" in data
     exp = data["explainability"]

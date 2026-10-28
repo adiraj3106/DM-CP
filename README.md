@@ -1,71 +1,42 @@
-# AgriGuard — PMFBY Crop Insurance Fraud Risk Analytics
+# AgriGuard — Discrete Mathematics Risk Analytics
 
-AgriGuard is an agricultural insurance fraud detection and risk analytics platform designed for the Pradhan Mantri Fasal Bima Yojana (PMFBY) crop insurance scheme in Maharashtra, India. The system detects organized fraud syndicates, collusion rings, and synthetic claims by deploying a Heterogeneous Graph Neural Network (HeteroGraphSAGE) across relational networks connecting claims, farmers, loss adjusters/assessors, and weather risk zones, paired with a transparent symbolic inference layer implementing the 9 classical laws of propositional deduction. Powered by a high-performance FastAPI backend delivering calibrated risk scores, verifiable logical proof traces, and network topology subgraphs alongside an interactive React/TypeScript dashboard, AgriGuard enables special investigation units (SIUs) to prioritize suspicious claims, inspect step-by-step deductive proofs, trace assessor-farmer collusion loops, and expedite legitimate farmer indemnity payouts formatted in Indian Rupees (₹).
+AgriGuard is a local dashboard for an illustrative Maharashtra crop-insurance portfolio. It connects PMFBY-style claim, producer, assessor, crop, village, weather-zone and payout records to precomputed graph-risk scores and a propositional-logic inference trace.
 
----
+**Portfolio records and scores are illustrative, not live PMFBY/RMA records.** The running API reads the CSVs in `agriguard_gnn_build/`. The bundled risk scores are precomputed values; the application does not load a trained GNN model. “Coverage” values in the UI are illustrative estimates derived from the claim amount and reported loss percentage, not source policy records.
 
-## Getting Started
+## Run locally
 
-Follow the exact commands below in sequential order to set up, train, score, infer, and run the complete AgriGuard platform:
-
-### 1. Install Dependencies
-
-Install the required Python machine learning and backend packages, followed by the frontend Node dependencies:
+In one terminal, install the API dependencies and start FastAPI from the repository root:
 
 ```bash
-# Python dependencies (PyTorch, PyG, FastAPI, Uvicorn, Scikit-learn, XGBoost, Pandas, Numpy)
-pip install -r requirements.txt
+python -m pip install fastapi uvicorn pandas
+python -m uvicorn backend.main:app --reload --port 8000
+```
 
-# Frontend dependencies
+In a second terminal, install frontend dependencies and start Vite:
+
+```bash
 npm install
+npm run dev -- --host 0.0.0.0
 ```
 
-### 2. Run `train_final.py`
+Open the local address printed by Vite. The frontend calls `http://localhost:8000` by default. To use another API address, set `VITE_API_BASE_URL` before starting Vite.
 
-Train the HeteroGraphSAGE model for 150 epochs on the 80/20 stratified split, evaluate validation F1 and AUC, and export model artifacts to `models/`:
+## Features
 
-```bash
-python agriguard_gnn_build/train_final.py
-```
+- Search claims by claim ID, producer, assessor, district, village, crop, peril, policy, or weather zone.
+- Filter by risk tier, pin claims, inspect claim details, and view the claim relationship graph.
+- Explore filtered portfolio analytics and export the current filtered results as CSV.
+- Save analyst notes and pinned claims in the current browser.
+- Read generated proof traces from `claim_proofs.csv`. The inference pipeline only applies a rule when its premises are available. A zero risk flag means no configured risk trigger was derived; it does not prove `¬Risk`.
 
-### 3. Run `score_all.py`
+## Regenerate the symbolic proof traces
 
-Generate model risk scores, triage tiers, and GNN graph explainability notes for all claims:
-
-```bash
-python agriguard_gnn_build/score_all.py
-```
-
-### 4. Run `inference_engine.py` (Symbolic Inference Layer)
-
-Execute the symbolic inference engine applying the 9 classical laws of propositional deduction on top of GNN risk scores and claims to generate verifiable proof traces in `claim_proofs.csv`:
+The 2,500 illustrative claim proof records can be regenerated from the bundled claims and precomputed risk scores:
 
 ```bash
+python -m pip install numpy pandas scikit-learn
 python agriguard_gnn_build/inference_engine.py
 ```
 
-### 5. Start the Backend
-
-Launch the FastAPI REST API server at `http://localhost:8000`:
-
-```bash
-uvicorn backend.main:app --reload --port 8000
-```
-
-*(Interactive Swagger API documentation will be available at `http://localhost:8000/docs`)*
-
-### 6. Start the Frontend
-
-Start the Vite development server to launch the analyst dashboard at `http://localhost:5173`:
-
-```bash
-npm run dev
-```
-
----
-
-## Architecture & Limitations
-
-- **Synthetic Data**: All claims, farmers, assessors, weather zones, and ground-truth fraud labels are entirely synthetic and generated from the project's data synthesis engine; no live PMFBY policyholder data is used.
-- **GNN + Symbolic Inference Only**: AgriGuard operates strictly on the Heterogeneous Graph Neural Network (`HeteroGraphSAGE`) combined with a propositional symbolic inference layer implementing the 9 classical laws of deduction (Modus Ponens, Modus Tollens, Hypothetical Syllogism, Disjunctive Syllogism, Addition, Simplification, Conjunction, Constructive Dilemma, and Destructive Dilemma).
-- **Tabular XGBoost Baseline**: The baseline XGBoost model operates solely on tabular, non-graph claim attributes (`claimed_damage_pct`, `claimed_payout_amount`, and `crop_type`) without incorporating relational topology or network neighborhood features.
+The training scripts are research artifacts; model training and scoring are not part of the local dashboard startup flow.

@@ -65,10 +65,10 @@ export const COLORS = {
   },
 
   surface: {
-    primary:      '#FBF8F3',
-    secondary:    '#F3EDE4',
+    primary:      '#F6F8F5',
+    secondary:    '#EFF2EE',
     elevated:     '#FFFFFF',
-    dark:         '#2D2926',
+    dark:         '#202822',
     darkElevated: '#453F3A',
   },
 
@@ -89,7 +89,7 @@ export const COLORS = {
   },
 
   pillar: {
-    gnn: '#5B7553',
+    gnn: '#40845A',
   },
 } as const;
 

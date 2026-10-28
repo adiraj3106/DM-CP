@@ -28,7 +28,7 @@ import type {
   NetworkEdge,
 } from '../types';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 // ─── API Response Interfaces ────────────────────────────────────────────────
 
@@ -41,6 +41,9 @@ interface ApiClaimSummary {
   claim_date: string;
   risk_score: number;
   triage_tier: 'approve' | 'review' | 'investigate';
+  policy_number: string; farmer_id: string; assessor_id: string; district: string; taluka: string; zone_id: string;
+  peril_type: string; claimed_damage_pct: number; insured_acres: number; estimated_coverage: number;
+  inspection_date: string; crop_year: number; gnn_available: boolean; risk_flag: number;
 }
 
 interface ApiClaimDetail extends ApiClaimSummary {
@@ -49,6 +52,7 @@ interface ApiClaimDetail extends ApiClaimSummary {
   };
   proof_trace?: string[];
   rules_fired?: string[];
+  evidence_note?: string;
 }
 
 interface ApiNetworkNode {
@@ -82,31 +86,31 @@ function mapApiSummaryToClaim(item: ApiClaimSummary): AgriGuardClaim {
   return {
     metadata: {
       claimId: item.claim_id,
-      policyNumber: `PMFBY-MH-${item.claim_id}`,
-      policyType: 'PMFBY - Comprehensive Risk Insurance',
-      policyValueUsd: item.claimed_payout_amount,
-      claimAmountUsd: item.claimed_payout_amount,
-      farmerId: `FRM-${item.claim_id}`,
+      policyNumber: item.policy_number,
+      policyType: 'PMFBY',
+      policyValueInr: item.estimated_coverage,
+      claimAmountInr: item.claimed_payout_amount,
+      claimedDamagePct: item.claimed_damage_pct,
+      farmerId: item.farmer_id,
       farmerName: item.farmer_name,
-      assessorId: `ADJ-${item.claim_id}`,
+      assessorId: item.assessor_id,
       assessorName: item.assessor_name,
       cropType: (item.crop_type || 'Wheat') as any,
-      perilType: 'Drought' as any,
-      lossReportDate: item.claim_date || '2025-10-01',
-      inspectionDate: '2025-10-05',
-      cropYear: 2025,
+      perilType: item.peril_type as any,
+      lossReportDate: item.claim_date,
+      inspectionDate: item.inspection_date,
+      cropYear: item.crop_year,
       parcel: {
-        countyFips: 'Taluka',
+        district: item.district,
+        taluka: item.taluka,
         stateAbbrev: 'MH',
-        cluTractId: `PMFBY-MH-${item.claim_id}`,
-        centroid: { latitude: 19.7515, longitude: 75.7139 },
-        insuredAcres: 5.0,
+        cluTractId: item.zone_id,
+        insuredAcres: item.insured_acres,
       },
     },
     riskScore: {
       composite,
       tier,
-      confidence: 0.90,
       pillars: {
         gnn: {
           raw: composite,
@@ -115,22 +119,23 @@ function mapApiSummaryToClaim(item: ApiClaimSummary): AgriGuardClaim {
         },
       },
     },
-    anomalies: [
+    anomalies: item.risk_score >= 40 ? [
       {
         pillar: 'gnn',
         severity: tier === 'investigate' ? 'critical' : tier === 'review' ? 'high' : 'low',
-        title: 'GNN Graph Neural Topology Finding',
-        description: `GNN calibrated risk score: ${item.risk_score.toFixed(1)}/100 (${item.triage_tier}).`,
-        sharedAssessorFlag: composite >= 0.7,
-        assessorClaimCountInCounty24Mo: composite >= 0.7 ? 14 : 3,
-        multiClaimProximityKm: composite >= 0.7 ? 2.1 : 8.5,
-        assessorFarmerLinkCount: composite >= 0.7 ? 8 : 2,
-        communityClusterId: `GNN-MH-${item.claim_id.slice(-2)}`,
+        title: 'Precomputed graph risk finding',
+        description: `Portfolio graph score ${item.risk_score.toFixed(1)}/100 (${item.triage_tier}); this score is precomputed and is not produced by live model inference.`,
+        sharedAssessorFlag: false,
+        assessorClaimCountInCounty24Mo: 0,
+        multiClaimProximityKm: 0,
+        assessorFarmerLinkCount: 0,
+        communityClusterId: `MH-${item.zone_id}`,
       },
-    ],
+    ] : [],
+    riskFlag: item.risk_flag,
     proofTrace: [],
     rulesFired: [],
-    lastAnalyzedAt: '2025-10-01T10:00:00Z',
+    lastAnalyzedAt: `${item.claim_date}T10:00:00Z`,
     investigatorNotes: '',
     isPinned: false,
   };
@@ -143,9 +148,10 @@ function updateClaimWithDetail(claim: AgriGuardClaim, detail: ApiClaimDetail): A
     ...claim,
     proofTrace: detail.proof_trace || [],
     rulesFired: detail.rules_fired || [],
+    riskFlag: detail.risk_flag,
     anomalies: claim.anomalies.map((a) => {
       if (a.pillar === 'gnn' && gnnNote) {
-        return { ...a, description: gnnNote };
+        return { ...a, description: `${gnnNote} (precomputed score; not live model inference).` };
       }
       return a;
     }),
@@ -214,7 +220,7 @@ export function buildNetworkGraphForClaim(claim: AgriGuardClaim): NetworkGraph {
     },
     {
       id: metadata.parcel.cluTractId,
-      label: `${metadata.parcel.stateAbbrev} - ${metadata.parcel.countyFips} (${metadata.parcel.insuredAcres} ac)`,
+      label: `${metadata.parcel.stateAbbrev} - ${metadata.parcel.district} (${metadata.parcel.insuredAcres} ac)`,
       kind: 'farmland',
       riskTier: null,
       riskScore: null,
@@ -449,8 +455,12 @@ function applyFilters(
         metadata.claimId,
         metadata.farmerName,
         metadata.assessorName,
+        metadata.cropType,
+        metadata.perilType,
         metadata.policyNumber,
         metadata.parcel.cluTractId,
+        metadata.parcel.district,
+        metadata.parcel.taluka,
       ]
         .join(' ')
         .toLowerCase();
@@ -509,8 +519,8 @@ function applySorting(
       case 'composite':
         comparison = a.riskScore.composite - b.riskScore.composite;
         break;
-      case 'claimAmountUsd':
-        comparison = a.metadata.claimAmountUsd - b.metadata.claimAmountUsd;
+      case 'claimAmountInr':
+        comparison = a.metadata.claimAmountInr - b.metadata.claimAmountInr;
         break;
       case 'lossReportDate':
         comparison =
@@ -577,40 +587,33 @@ export function ClaimsProvider({ children, initialClaims }: ClaimsProviderProps)
     isLoading: initialClaims ? false : true,
   });
 
+  const stateRef = useRef(state);
+  stateRef.current = state;
   const detailCache = useRef<Map<string, ApiClaimDetail>>(new Map());
+  const detailApplied = useRef<Set<string>>(new Set());
   const networkCache = useRef<Map<string, NetworkGraph>>(new Map());
 
   // ── Network Fetch Helpers ──
 
   const fetchClaimDetail = useCallback(async (claimId: string) => {
-    if (detailCache.current.has(claimId)) {
-      const cached = detailCache.current.get(claimId)!;
-      dispatch({
-        type: 'UPDATE_CLAIM',
-        payload: updateClaimWithDetail(
-          state.claims.find((c) => c.metadata.claimId === claimId)!,
-          cached
-        ),
-      });
-      return;
-    }
-
+    if (detailApplied.current.has(claimId)) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/claims/${claimId}`);
-      if (!res.ok) return;
-      const detail: ApiClaimDetail = await res.json();
-      detailCache.current.set(claimId, detail);
-      const existing = state.claims.find((c) => c.metadata.claimId === claimId);
+      let detail = detailCache.current.get(claimId);
+      if (!detail) {
+        const res = await fetch(`${API_BASE_URL}/claims/${claimId}`);
+        if (!res.ok) return;
+        detail = await res.json();
+        detailCache.current.set(claimId, detail!);
+      }
+      const existing = stateRef.current.claims.find((claim) => claim.metadata.claimId === claimId);
       if (existing) {
-        dispatch({
-          type: 'UPDATE_CLAIM',
-          payload: updateClaimWithDetail(existing, detail),
-        });
+        dispatch({ type: 'UPDATE_CLAIM', payload: updateClaimWithDetail(existing, detail!) });
+        detailApplied.current.add(claimId);
       }
     } catch {
-      // Silently fall back to existing data if detail endpoint is unreachable
+      // The list endpoint remains usable when optional detail requests fail.
     }
-  }, [state.claims]);
+  }, []);
 
   const fetchClaimNetwork = useCallback(async (claimId: string) => {
     if (networkCache.current.has(claimId)) {
@@ -642,28 +645,32 @@ export function ClaimsProvider({ children, initialClaims }: ClaimsProviderProps)
         throw new Error(`Failed to load claims from backend (${res.status} ${res.statusText})`);
       }
       const data: ApiClaimSummary[] = await res.json();
-      const claims = data.map((item) => mapApiSummaryToClaim(item));
+      const saved = JSON.parse(localStorage.getItem('agriguard-demo-claim-state') || '{}') as Record<string, { isPinned?: boolean; investigatorNotes?: string }>;
+      const claims = data.map((item) => {
+        const claim = mapApiSummaryToClaim(item);
+        const personal = saved[claim.metadata.claimId];
+        return personal ? { ...claim, isPinned: !!personal.isPinned, investigatorNotes: personal.investigatorNotes || '' } : claim;
+      });
+      detailApplied.current.clear();
       dispatch({ type: 'SET_CLAIMS', payload: claims });
 
-      // Pre-fetch detail and network for the first claim
-      if (claims.length > 0) {
-        const firstId = claims[0].metadata.claimId;
-        fetchClaimDetail(firstId);
-        fetchClaimNetwork(firstId);
-      }
     } catch (err: any) {
       dispatch({
         type: 'SET_ERROR',
         payload: err?.message || 'Unable to connect to AgriGuard backend at http://localhost:8000',
       });
     }
-  }, [fetchClaimDetail, fetchClaimNetwork]);
+  }, []);
 
   useEffect(() => {
-    if (!initialClaims) {
-      loadClaims();
-    }
+    if (!initialClaims) loadClaims();
   }, [initialClaims, loadClaims]);
+
+  useEffect(() => {
+    if (!state.claims.length) return;
+    const saved = Object.fromEntries(state.claims.filter((claim) => claim.isPinned || claim.investigatorNotes).map((claim) => [claim.metadata.claimId, { isPinned: claim.isPinned, investigatorNotes: claim.investigatorNotes }]));
+    localStorage.setItem('agriguard-demo-claim-state', JSON.stringify(saved));
+  }, [state.claims]);
 
   // ── Fetch Detail and Graph whenever selectedClaimId changes ──
 
@@ -672,7 +679,7 @@ export function ClaimsProvider({ children, initialClaims }: ClaimsProviderProps)
       fetchClaimDetail(state.selectedClaimId);
       fetchClaimNetwork(state.selectedClaimId);
     }
-  }, [state.selectedClaimId, fetchClaimDetail, fetchClaimNetwork]);
+  }, [state.selectedClaimId, state.claims, fetchClaimDetail, fetchClaimNetwork]);
 
   // ── Derived Data (Memoized) ──
 
@@ -692,7 +699,7 @@ export function ClaimsProvider({ children, initialClaims }: ClaimsProviderProps)
   const stats = useMemo(() => {
     const totalClaims = state.claims.length;
     const totalExposureUsd = state.claims.reduce(
-      (sum, c) => sum + c.metadata.claimAmountUsd,
+      (sum, c) => sum + c.metadata.claimAmountInr,
       0
     );
     const tierCounts: Record<RiskTier, number> = { safe: 0, review: 0, investigate: 0 };

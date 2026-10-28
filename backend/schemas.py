@@ -25,7 +25,7 @@ class ClaimSummary(BaseModel):
     """
     model_config = ConfigDict(populate_by_name=True)
 
-    claim_id: str = Field(..., description="Unique claim identifier, e.g. 'AG-2601-00142'")
+    claim_id: str = Field(..., description="Unique claim identifier, e.g. 'C00001'")
     farmer_name: str = Field(..., description="Full legal name of the producer")
     assessor_name: str = Field(..., description="Assigned loss-adjuster name")
     crop_type: str = Field(..., description="Insured crop classification")
@@ -33,6 +33,20 @@ class ClaimSummary(BaseModel):
     claim_date: str = Field(..., description="Date the loss was reported (YYYY-MM-DD)")
     risk_score: float = Field(..., ge=0.0, le=100.0, description="Risk score calibrated from 0 to 100")
     triage_tier: TriageTier = Field(..., description="Operational triage routing: 'approve', 'review', or 'investigate'")
+    policy_number: str
+    farmer_id: str
+    assessor_id: str
+    district: str
+    taluka: str
+    zone_id: str
+    peril_type: str
+    claimed_damage_pct: float
+    insured_acres: float
+    estimated_coverage: float
+    inspection_date: str
+    crop_year: int
+    gnn_available: bool
+    risk_flag: int
 
 
 class ClaimDetail(ClaimSummary):
@@ -52,6 +66,7 @@ class ClaimDetail(ClaimSummary):
         default_factory=list,
         description="List of symbolic deduction rules that fired for this claim"
     )
+    evidence_note: str
 
 
 class NetworkNodeKind(str, Enum):

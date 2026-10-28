@@ -83,14 +83,13 @@ export interface GeoCoordinate {
 }
 
 export interface ParcelBoundary {
-  /** Taluka identifier */
-  countyFips: string;
+  /** District name */
+  district: string;
+  taluka: string;
   /** District / State abbreviation (e.g. "MH") */
   stateAbbrev: string;
   /** PMFBY Land parcel identifier */
   cluTractId: string;
-  /** Centroid of the insured parcel */
-  centroid: GeoCoordinate;
   /** Approximate acreage of the insured parcel */
   insuredAcres: number;
 }
@@ -101,14 +100,15 @@ export interface ParcelBoundary {
 export interface ClaimMetadata {
   /** Internal AgriGuard claim identifier (format: "AG-YYMM-XXXXX") */
   claimId: string;
-  /** USDA RMA policy number */
+  /** Synthetic PMFBY-style policy reference */
   policyNumber: string;
   /** Type of crop insurance product */
   policyType: PolicyType;
-  /** Total liability / policy value in USD */
-  policyValueUsd: number;
-  /** Claimed indemnity amount in USD */
-  claimAmountUsd: number;
+  /** Illustrative coverage estimate in INR */
+  policyValueInr: number;
+  /** Claimed indemnity amount in INR */
+  claimAmountInr: number;
+  claimedDamagePct: number;
   /** Farmer / producer entity ID */
   farmerId: string;
   /** Full legal name of the insured producer */
@@ -150,7 +150,6 @@ export interface RiskScore {
    *  safe: 0.00–0.39 | review: 0.40–0.69 | investigate: 0.70–1.00 */
   tier: RiskTier;
   /** Confidence of the composite model (0.0 – 1.0) */
-  confidence: number;
   /** Per-pillar breakdown */
   pillars: {
     gnn: RiskPillarScore;
@@ -248,7 +247,7 @@ export interface NetworkGraph {
 export type SortField =
   | 'claimId'
   | 'composite'
-  | 'claimAmountUsd'
+  | 'claimAmountInr'
   | 'lossReportDate'
   | 'cropType'
   | 'tier';

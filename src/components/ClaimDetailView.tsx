@@ -39,7 +39,7 @@ function formatPercent(value: any) {
 
 /**
  * ClaimDetailView — AgriGuard Deep-Dive Detail Inspector
- * Presents GNN graph topology findings alongside the symbolic inference logical proof.
+ * Presents claim network findings alongside the symbolic inference logical proof.
  */
 export function ClaimDetailView() {
   const { state, selectClaim, togglePinClaim, setInvestigatorNotes } = useClaims();
@@ -51,35 +51,35 @@ export function ClaimDetailView() {
 
   if (!selectedClaim) {
     return (
-      <div className="flex flex-col items-center justify-center h-full w-full bg-white text-[#2D2926] p-8 text-center rounded-xl border border-[#E8E2D9] shadow-sm select-none">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#5B7553]/10 text-[#5B7553] mb-4">
+      <div className="flex flex-col items-center justify-center h-full w-full bg-app-panel text-app-ink p-8 text-center rounded-xl border border-app-line shadow-sm select-none">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-app-safe-soft text-app-safe mb-4">
           <Network className="h-7 w-7" />
         </div>
-        <h3 className="font-serif text-lg font-bold tracking-tight text-[#2D2926]">
+        <h3 className="font-heading text-lg font-bold tracking-tight text-app-ink">
           No Claim Selected
         </h3>
-        <p className="text-xs text-[#6B635B] mt-1.5 max-w-sm">
+        <p className="text-xs text-app-muted mt-1.5 max-w-sm">
           Select an agricultural insurance claim from the triage ledger to inspect GNN network topology and symbolic logical proofs.
         </p>
 
         <div className="mt-6 flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-lg bg-white px-3.5 py-2 text-xs text-[#6B635B] border border-[#E8E2D9] shadow-sm">
+          <div className="flex items-center gap-2 rounded-lg bg-app-panel px-3.5 py-2 text-xs text-app-muted border border-app-line shadow-sm">
             <span>Awaiting claim selection from active ledger…</span>
           </div>
         </div>
 
         <div className="mt-8 grid grid-cols-2 gap-3 w-full max-w-md text-left">
-          <div className="p-3.5 rounded-lg bg-white border border-[#E8E2D9]">
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#5B7553] uppercase tracking-wider">
-              <Network className="h-3.5 w-3.5" /> GNN Network Topology
+          <div className="p-3.5 rounded-lg bg-app-panel border border-app-line">
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-app-safe uppercase tracking-wider">
+              <Network className="h-3.5 w-3.5" /> Claim Network Topology
             </div>
-            <p className="text-[11px] text-[#9A928A] mt-1">HeteroGraphSAGE relational links & shared adjuster hubs</p>
+            <p className="text-[11px] text-app-subtle mt-1">HeteroGraphSAGE relational links & shared adjuster hubs</p>
           </div>
-          <div className="p-3.5 rounded-lg bg-white border border-[#E8E2D9]">
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#7C2D3E] uppercase tracking-wider">
+          <div className="p-3.5 rounded-lg bg-app-panel border border-app-line">
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-app-primary uppercase tracking-wider">
               <Scale className="h-3.5 w-3.5" /> Symbolic Inference
             </div>
-            <p className="text-[11px] text-[#9A928A] mt-1">Propositional deduction via the 9 laws of inference</p>
+            <p className="text-[11px] text-app-subtle mt-1">Propositional deduction via the 9 laws of inference</p>
           </div>
         </div>
       </div>
@@ -96,25 +96,25 @@ export function ClaimDetailView() {
     switch (severity) {
       case 'critical':
         return (
-          <span className="inline-flex items-center gap-1 rounded bg-[#B84233]/10 px-2 py-0.5 text-[10px] font-bold text-[#B84233] border border-[#B84233]/20 uppercase tracking-wider">
+          <span className="inline-flex items-center gap-1 rounded bg-app-investigate-soft px-2 py-0.5 text-[10px] font-bold text-app-investigate border border-app-investigate uppercase tracking-wider">
             <AlertTriangle className="h-3 w-3" /> Critical Anomaly
           </span>
         );
       case 'high':
         return (
-          <span className="inline-flex items-center gap-1 rounded bg-[#C17C2A]/10 px-2 py-0.5 text-[10px] font-bold text-[#C17C2A] border border-[#C17C2A]/20 uppercase tracking-wider">
+          <span className="inline-flex items-center gap-1 rounded bg-app-review-soft px-2 py-0.5 text-[10px] font-bold text-app-review border border-app-review uppercase tracking-wider">
             <AlertTriangle className="h-3 w-3" /> High Risk
           </span>
         );
       case 'medium':
         return (
-          <span className="inline-flex items-center gap-1 rounded bg-[#E8E2D9] px-2 py-0.5 text-[10px] font-bold text-[#2D2926] border border-[#E8E2D9] uppercase tracking-wider">
+          <span className="inline-flex items-center gap-1 rounded bg-app-panel-soft px-2 py-0.5 text-[10px] font-bold text-app-ink border border-app-line uppercase tracking-wider">
             <Info className="h-3 w-3" /> Medium Warning
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 rounded bg-[#5B7553]/10 px-2 py-0.5 text-[10px] font-bold text-[#5B7553] border border-[#5B7553]/20 uppercase tracking-wider">
+          <span className="inline-flex items-center gap-1 rounded bg-app-safe-soft px-2 py-0.5 text-[10px] font-bold text-app-safe border border-app-safe uppercase tracking-wider">
             <CheckCircle2 className="h-3 w-3" /> Low Risk / Normal
           </span>
         );
@@ -125,19 +125,19 @@ export function ClaimDetailView() {
     switch (tier) {
       case 'investigate':
         return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#B84233] px-3 py-1 text-xs font-bold text-white shadow-sm uppercase tracking-wider">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-app-investigate px-3 py-1 text-xs font-bold text-white shadow-sm uppercase tracking-wider">
             <ShieldAlert className="h-3.5 w-3.5" /> INVESTIGATE
           </span>
         );
       case 'review':
         return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#C17C2A] px-3 py-1 text-xs font-bold text-white shadow-sm uppercase tracking-wider">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-app-review px-3 py-1 text-xs font-bold text-white shadow-sm uppercase tracking-wider">
             <AlertTriangle className="h-3.5 w-3.5" /> REVIEW REQUIRED
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#5B7553] px-3 py-1 text-xs font-bold text-white shadow-sm uppercase tracking-wider">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-app-safe px-3 py-1 text-xs font-bold text-white shadow-sm uppercase tracking-wider">
             <ShieldCheck className="h-3.5 w-3.5" /> SAFE / CLEARED
           </span>
         );
@@ -145,22 +145,22 @@ export function ClaimDetailView() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-white text-[#2D2926] rounded-xl border border-[#E8E2D9] shadow-sm overflow-hidden font-sans">
+    <div className="flex flex-col h-full w-full bg-app-panel text-app-ink rounded-xl border border-app-line shadow-sm overflow-hidden font-sans">
       
       {/* ── HEADER BAR ──────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E8E2D9] bg-[#FBF8F3] p-4 sm:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-app-line bg-app-canvas p-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#7C2D3E] text-white text-sm font-bold shadow-md">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-app-primary-fill text-white text-sm font-bold shadow-md">
             AG
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="font-mono text-lg font-bold tracking-tight text-[#2D2926]">
+              <h2 className="font-mono text-lg font-bold tracking-tight text-app-ink">
                 {metadata.claimId}
               </h2>
               {getTierBadge(riskScore.tier)}
             </div>
-            <p className="text-xs text-[#9A928A] font-mono mt-0.5">
+            <p className="text-xs text-app-subtle font-mono mt-0.5">
               Policy #{metadata.policyNumber} • {metadata.policyType}
             </p>
           </div>
@@ -172,18 +172,18 @@ export function ClaimDetailView() {
               onClick={() => togglePinClaim(metadata.claimId)}
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium border transition-colors ${
                 isPinned
-                  ? 'bg-[#C17C2A]/15 border-[#C17C2A]/40 text-[#C17C2A]'
-                  : 'bg-white border-[#E8E2D9] text-[#6B635B] hover:bg-[#FBF8F3]'
+                  ? 'bg-app-review-soft border-app-review text-app-review'
+                  : 'bg-app-panel border-app-line text-app-muted hover:bg-app-canvas'
               }`}
             >
-              <Pin className={`h-3.5 w-3.5 ${isPinned ? 'fill-[#C17C2A] text-[#C17C2A]' : ''}`} />
+              <Pin className={`h-3.5 w-3.5 ${isPinned ? 'fill-app-review text-app-review' : ''}`} />
               <span>{isPinned ? 'Pinned' : 'Pin Claim'}</span>
             </button>
           )}
           
           <button
             onClick={handleClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E8E2D9] bg-white text-[#9A928A] hover:text-[#2D2926] hover:bg-[#FBF8F3] transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-app-line bg-app-panel text-app-subtle hover:text-app-ink hover:bg-app-canvas transition-colors"
             title="Close inspector"
           >
             <X className="h-4 w-4" />
@@ -197,69 +197,66 @@ export function ClaimDetailView() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           
           {/* Composite Score Card */}
-          <div className="rounded-xl border border-[#B84233]/20 bg-[#B84233]/5 p-4 relative overflow-hidden">
+          <div className="rounded-xl border border-app-investigate-soft bg-app-investigate-soft p-4 relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#9A928A]">
-                Calibrated Risk Score
+              <span className="text-[11px] font-bold uppercase tracking-wider text-app-subtle">
+                Risk Score
               </span>
-              <Activity className="h-4 w-4 text-[#B84233]" />
+              <Activity className="h-4 w-4 text-app-investigate" />
             </div>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="font-mono text-3xl font-extrabold text-[#B84233]">
+              <span className="font-mono text-3xl font-extrabold text-app-investigate">
                 {formatPercent(riskScore.composite)}
               </span>
-              <span className="text-xs font-mono text-[#9A928A]">
-                ({formatPercent(riskScore.confidence)} confidence)
-              </span>
             </div>
-            <div className="mt-2 w-full bg-[#E8E2D9] h-2 rounded-full overflow-hidden">
+            <div className="mt-2 w-full bg-app-panel-soft h-2 rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#B84233] rounded-full"
+                className="h-full bg-app-investigate rounded-full"
                 style={{ width: `${riskScore.composite * 100}%` }}
               />
             </div>
           </div>
 
           {/* Financial Liability Card */}
-          <div className="rounded-xl border border-[#E8E2D9] bg-white p-4">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#9A928A] block">
+          <div className="rounded-xl border border-app-line bg-app-panel p-4">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-app-subtle block">
               Claimed Indemnity Value
             </span>
-            <div className="mt-2 font-mono text-2xl font-bold text-[#2D2926]">
-              {formatInr(metadata.claimAmountUsd)}
+            <div className="mt-2 font-mono text-2xl font-bold text-app-ink">
+              {formatInr(metadata.claimAmountInr)}
             </div>
-            <p className="text-[11px] text-[#9A928A] mt-1 font-mono">
-              Policy Liability: {formatInr(metadata.policyValueUsd)}
+            <p className="text-[11px] text-app-subtle mt-1 font-mono">
+              Estimated Coverage: {formatInr(metadata.policyValueInr)}
             </p>
           </div>
 
           {/* Crop & Peril Card */}
-          <div className="rounded-xl border border-[#E8E2D9] bg-white p-4">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#9A928A] block">
+          <div className="rounded-xl border border-app-line bg-app-panel p-4">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-app-subtle block">
               Insured Commodity & Peril
             </span>
-            <div className="mt-2 font-semibold text-sm text-[#2D2926] flex items-center gap-1.5">
-              <Zap className="h-4 w-4 text-[#C17C2A]" />
+            <div className="mt-2 font-semibold text-sm text-app-ink flex items-center gap-1.5">
+              <Zap className="h-4 w-4 text-app-review" />
               <span>{metadata.cropType}</span>
             </div>
-            <p className="text-xs text-[#9A928A] mt-1">
-              Peril: <strong className="text-[#6B635B] font-medium">{metadata.perilType}</strong> ({metadata.cropYear})
+            <p className="text-xs text-app-subtle mt-1">
+              Peril: <strong className="text-app-muted font-medium">{metadata.perilType}</strong> ({metadata.cropYear})
             </p>
           </div>
 
           {/* Location & Assessor Card */}
-          <div className="rounded-xl border border-[#E8E2D9] bg-white p-4">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#9A928A] block">
+          <div className="rounded-xl border border-app-line bg-app-panel p-4">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-app-subtle block">
               Parcel & Assessor Metadata
             </span>
-            <div className="mt-1 text-xs text-[#6B635B] space-y-1">
+            <div className="mt-1 text-xs text-app-muted space-y-1">
               <div className="flex items-center gap-1">
-                <User className="h-3.5 w-3.5 text-[#9A928A]" />
+                <User className="h-3.5 w-3.5 text-app-subtle" />
                 <span className="truncate">{metadata.farmerName} ({metadata.farmerId})</span>
               </div>
-              <div className="flex items-center gap-1 text-[11px] font-mono text-[#9A928A]">
-                <MapPin className="h-3.5 w-3.5 text-[#5B7553]" />
-                <span>PMFBY Farmland Parcel ({metadata.parcel.insuredAcres} ac) • District: {metadata.parcel.stateAbbrev} • Taluka: {metadata.parcel.countyFips}</span>
+              <div className="flex items-center gap-1 text-[11px] font-mono text-app-subtle">
+                <MapPin className="h-3.5 w-3.5 text-app-safe" />
+                <span>PMFBY Farmland Parcel ({metadata.parcel.insuredAcres} ac) • District: {metadata.parcel.district} • Taluka: {metadata.parcel.taluka}</span>
               </div>
             </div>
           </div>
@@ -268,35 +265,35 @@ export function ClaimDetailView() {
 
         {/* ── EXPLAINABILITY & SYMBOLIC LOGICAL PROOF ───────────────────────── */}
         <div className="space-y-6">
-          <div className="flex items-center justify-between border-b border-[#E8E2D9] pb-2">
-            <h3 className="font-serif text-sm font-bold uppercase tracking-wider text-[#2D2926] flex items-center gap-2">
-              <Layers className="h-4 w-4 text-[#7C2D3E]" />
+          <div className="flex items-center justify-between border-b border-app-line pb-2">
+            <h3 className="font-heading text-sm font-bold uppercase tracking-wider text-app-ink flex items-center gap-2">
+              <Layers className="h-4 w-4 text-app-primary" />
               <span>Deductive & Topological Explainability</span>
             </h3>
-            <span className="text-xs text-[#9A928A] font-mono">
-              HeteroGraphSAGE GNN • Classical Symbolic Inference (9 Laws)
+            <span className="text-xs text-app-subtle font-mono">
+              Graph risk score • Classical Symbolic Inference (9 Laws)
             </span>
           </div>
 
           <div className="grid grid-cols-1 gap-6">
 
             {/* ═════════════════════════════════════════════════════════════════
-                PILLAR 1: GNN NETWORK ANOMALIES (Graph connections, shared adjusters)
+                PILLAR 1: NETWORK SIGNALS (Graph connections, shared adjusters)
                ═════════════════════════════════════════════════════════════════ */}
-            <div className="rounded-xl border border-[#E8E2D9] bg-white p-5 shadow-sm space-y-4 relative overflow-hidden">
-              <div className="absolute top-0 left-0 bottom-0 w-1 bg-[#5B7553]" />
+            <div className="rounded-xl border border-app-line bg-app-panel p-5 shadow-sm space-y-4 relative overflow-hidden">
+              <div className="absolute top-0 left-0 bottom-0 w-1 bg-app-safe" />
               
               {/* Header */}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E8E2D9] pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-app-line pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#5B7553]/10 text-[#5B7553]">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-app-safe-soft text-app-safe">
                     <Network className="h-4 w-4" />
                   </div>
                   <div>
-                    <h4 className="font-serif font-bold text-base text-[#2D2926] flex items-center gap-2">
-                      1. GNN Network Topology Findings
+                    <h4 className="font-heading font-bold text-base text-app-ink flex items-center gap-2">
+                      1. Claim Network Topology Findings
                     </h4>
-                    <p className="text-xs text-[#9A928A] font-mono">
+                    <p className="text-xs text-app-subtle font-mono">
                       Graph Neural Topology • Shared Adjusters • Spatial Clustering
                     </p>
                   </div>
@@ -304,7 +301,7 @@ export function ClaimDetailView() {
 
                 <div className="flex items-center gap-2">
                   {gnnAnomaly && getSeverityBadge(gnnAnomaly.severity)}
-                  <span className="rounded-full bg-[#5B7553]/10 px-2.5 py-1 text-xs font-mono font-bold text-[#5B7553]">
+                  <span className="rounded-full bg-app-safe-soft px-2.5 py-1 text-xs font-mono font-bold text-app-safe">
                     Raw Risk: {formatPercent(riskScore.pillars.gnn.raw)}
                   </span>
                 </div>
@@ -314,56 +311,56 @@ export function ClaimDetailView() {
               {gnnAnomaly ? (
                 <div className="space-y-4">
                   <div>
-                    <h5 className="font-semibold text-sm text-[#2D2926] mb-1">
+                    <h5 className="font-semibold text-sm text-app-ink mb-1">
                       {gnnAnomaly.title}
                     </h5>
-                    <p className="text-xs text-[#6B635B] leading-relaxed">
+                    <p className="text-xs text-app-muted leading-relaxed">
                       {gnnAnomaly.description}
                     </p>
                   </div>
 
                   {/* High-Density Technical Metric Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#FBF8F3] p-3.5 rounded-lg border border-[#E8E2D9]">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-app-canvas p-3.5 rounded-lg border border-app-line">
                     <div>
-                      <span className="text-[10px] font-mono uppercase text-[#9A928A] block">
+                      <span className="text-[10px] font-mono uppercase text-app-subtle block">
                         Assessor Hub Flag
                       </span>
-                      <span className={`inline-flex items-center gap-1 text-xs font-bold mt-1 font-mono ${gnnAnomaly.sharedAssessorFlag ? 'text-[#B84233]' : 'text-[#5B7553]'}`}>
+                      <span className={`inline-flex items-center gap-1 text-xs font-bold mt-1 font-mono ${gnnAnomaly.sharedAssessorFlag ? 'text-app-investigate' : 'text-app-safe'}`}>
                         {gnnAnomaly.sharedAssessorFlag ? '⚠️ FLAGGED HUB' : '✓ Normal Load'}
                       </span>
                     </div>
 
                     <div>
-                      <span className="text-[10px] font-mono uppercase text-[#9A928A] block">
+                      <span className="text-[10px] font-mono uppercase text-app-subtle block">
                         District Claims (24mo)
                       </span>
-                      <span className="text-xs font-mono font-bold text-[#2D2926] mt-1 block">
+                      <span className="text-xs font-mono font-bold text-app-ink mt-1 block">
                         {gnnAnomaly.assessorClaimCountInCounty24Mo} Claims
                       </span>
                     </div>
 
                     <div>
-                      <span className="text-[10px] font-mono uppercase text-[#9A928A] block">
+                      <span className="text-[10px] font-mono uppercase text-app-subtle block">
                         Spatial Proximity
                       </span>
-                      <span className="text-xs font-mono font-bold text-[#2D2926] mt-1 block">
+                      <span className="text-xs font-mono font-bold text-app-ink mt-1 block">
                         {gnnAnomaly.multiClaimProximityKm} km Avg Dist
                       </span>
                     </div>
 
                     <div>
-                      <span className="text-[10px] font-mono uppercase text-[#9A928A] block">
-                        GNN Cluster ID
+                      <span className="text-[10px] font-mono uppercase text-app-subtle block">
+                        Zone Cluster ID
                       </span>
-                      <span className="inline-block mt-1 font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-[#5B7553]/10 text-[#5B7553]">
+                      <span className="inline-block mt-1 font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-app-safe-soft text-app-safe">
                         {gnnAnomaly.communityClusterId || 'N/A'}
                       </span>
                     </div>
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-[#9A928A] italic">
-                  No structural network anomalies flagged by GNN graph analysis.
+                <p className="text-xs text-app-subtle italic">
+                  No precomputed network signal is attached to this claim.
                 </p>
               )}
             </div>
@@ -371,27 +368,27 @@ export function ClaimDetailView() {
             {/* ═════════════════════════════════════════════════════════════════
                 PILLAR 2: LOGICAL PROOF PANEL (Symbolic Inference Layer)
                ═════════════════════════════════════════════════════════════════ */}
-            <div className="rounded-xl border border-[#E8E2D9] bg-white p-5 shadow-sm space-y-4 relative overflow-hidden">
-              <div className="absolute top-0 left-0 bottom-0 w-1 bg-[#7C2D3E]" />
+            <div className="rounded-xl border border-app-line bg-app-panel p-5 shadow-sm space-y-4 relative overflow-hidden">
+              <div className="absolute top-0 left-0 bottom-0 w-1 bg-app-primary-fill" />
 
               {/* Header */}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E8E2D9] pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-app-line pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#7C2D3E]/10 text-[#7C2D3E]">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-app-primary-soft text-app-primary">
                     <Scale className="h-4 w-4" />
                   </div>
                   <div>
-                    <h4 className="font-serif font-bold text-base text-[#2D2926] flex items-center gap-2">
+                    <h4 className="font-heading font-bold text-base text-app-ink flex items-center gap-2">
                       2. Logical Proof (Laws of Inference)
                     </h4>
-                    <p className="text-xs text-[#9A928A] font-mono">
+                    <p className="text-xs text-app-subtle font-mono">
                       Propositional Calculus • 9 Deductive Laws • Step-by-Step Proof Trace
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-[#7C2D3E]/10 px-2.5 py-1 text-xs font-mono font-bold text-[#7C2D3E]">
+                  <span className="rounded-full bg-app-primary-soft px-2.5 py-1 text-xs font-mono font-bold text-app-primary">
                     {rulesFired.length} Rules Fired
                   </span>
                 </div>
@@ -400,13 +397,13 @@ export function ClaimDetailView() {
               {/* Rules Fired Tags */}
               {rulesFired.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <span className="text-[10px] font-mono uppercase text-[#9A928A] mr-1">
+                  <span className="text-[10px] font-mono uppercase text-app-subtle mr-1">
                     Inference Rules:
                   </span>
                   {rulesFired.map((ruleName, idx) => (
                     <span
                       key={idx}
-                      className="inline-flex items-center rounded-md bg-[#FBF8F3] px-2 py-0.5 text-[11px] font-mono font-semibold text-[#2D2926] border border-[#E8E2D9]"
+                      className="inline-flex items-center rounded-md bg-app-canvas px-2 py-0.5 text-[11px] font-mono font-semibold text-app-ink border border-app-line"
                     >
                       {ruleName}
                     </span>
@@ -417,7 +414,7 @@ export function ClaimDetailView() {
               {/* Numbered Logical Proof Trace Steps */}
               {proofTrace.length > 0 ? (
                 <div className="space-y-2.5 pt-2">
-                  <span className="text-[10px] font-mono uppercase text-[#9A928A] block">
+                  <span className="text-[10px] font-mono uppercase text-app-subtle block">
                     Sequential Deduction Steps:
                   </span>
                   <div className="space-y-2">
@@ -429,18 +426,18 @@ export function ClaimDetailView() {
                       return (
                         <div
                           key={idx}
-                          className="flex items-start gap-3 rounded-lg border border-[#E8E2D9] bg-[#FBF8F3] p-3 transition-colors hover:bg-white"
+                          className="flex items-start gap-3 rounded-lg border border-app-line bg-app-canvas p-3 transition-colors hover:bg-app-panel"
                         >
-                          <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#5B7553]/15 text-[#5B7553] font-mono text-[11px] font-bold mt-0.5">
+                          <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-app-safe-soft text-app-safe font-mono text-[11px] font-bold mt-0.5">
                             {idx + 1}
                           </div>
                           <div className="flex-1 space-y-1">
                             {rulePrefix && (
-                              <div className="text-[11px] font-mono font-bold text-[#7C2D3E] uppercase tracking-wide">
+                              <div className="text-[11px] font-mono font-bold text-app-primary uppercase tracking-wide">
                                 {rulePrefix}
                               </div>
                             )}
-                            <div className="font-mono text-xs text-[#2D2926] leading-relaxed break-words">
+                            <div className="font-mono text-xs text-app-ink leading-relaxed break-words">
                               {stepContent}
                             </div>
                           </div>
@@ -450,7 +447,7 @@ export function ClaimDetailView() {
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-[#9A928A] italic">
+                <p className="text-xs text-app-subtle italic">
                   No symbolic inference proof steps recorded for this claim.
                 </p>
               )}
@@ -460,13 +457,13 @@ export function ClaimDetailView() {
         </div>
 
         {/* ── INVESTIGATOR FIELD NOTES & AUDIT TRAIL ────────────────────────── */}
-        <div className="rounded-xl border border-[#E8E2D9] bg-[#FBF8F3] p-5 space-y-3">
+        <div className="rounded-xl border border-app-line bg-app-canvas p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="font-serif text-xs font-bold uppercase tracking-wider text-[#2D2926] flex items-center gap-2">
-              <FileSpreadsheet className="h-4 w-4 text-[#5B7553]" />
+            <h4 className="font-heading text-xs font-bold uppercase tracking-wider text-app-ink flex items-center gap-2">
+              <FileSpreadsheet className="h-4 w-4 text-app-safe" />
               <span>SIU Investigator Field Notes</span>
             </h4>
-            <span className="text-[11px] font-mono text-[#9A928A]">
+            <span className="text-[11px] font-mono text-app-subtle">
               Analyzed: {new Date(lastAnalyzedAt).toLocaleString()}
             </span>
           </div>
@@ -476,11 +473,11 @@ export function ClaimDetailView() {
             value={investigatorNotes ?? ''}
             onChange={(e) => setInvestigatorNotes && setInvestigatorNotes(metadata.claimId, e.target.value)}
             placeholder="Record SIU field verification findings, network cross-checks, or referral notes..."
-            className="w-full rounded-lg border border-[#E8E2D9] bg-white p-3 text-xs text-[#2D2926] placeholder-[#9A928A] focus:border-[#5B7553] focus:ring-1 focus:ring-[#5B7553] focus:outline-none transition-all font-sans"
+            className="w-full rounded-lg border border-app-line bg-app-panel p-3 text-xs text-app-ink placeholder-app-subtle focus:border-app-safe focus:ring-1 focus:ring-app-primary focus:outline-none transition-all font-sans"
           />
 
-          <div className="flex items-center justify-between text-[11px] text-[#9A928A] font-mono pt-1">
-            <span>Audit Trail Engine: AgriGuard GNN + Symbolic Logic</span>
+          <div className="flex items-center justify-between text-[11px] text-app-subtle font-mono pt-1">
+            <span>Audit Trail Engine: AgriGuard Risk Scores + Symbolic Logic</span>
             <span>CLU: {metadata.parcel.cluTractId}</span>
           </div>
         </div>
