@@ -27,9 +27,13 @@ import {
   RefreshCw,
   Sun,
   Moon,
+  Upload,
+  BookOpenCheck,
 } from 'lucide-react';
 import { NetworkGraphPanel } from './NetworkGraphPanel';
 import { AnalyticsPanel } from './AnalyticsPanel';
+import { DatasetImportPanel } from './DatasetImportPanel';
+import { InferenceLawsPanel } from './InferenceLawsPanel';
 
 
 
@@ -51,7 +55,7 @@ export function DashboardLayout() {
     refetchClaims,
   } = useClaims();
 
-  const [activeTab, setActiveTab] = useState<'claims' | 'analytics' | 'network'>('claims');
+  const [activeTab, setActiveTab] = useState<'claims' | 'analytics' | 'network' | 'import' | 'laws'>('claims');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window === 'undefined') return 'light';
@@ -67,6 +71,21 @@ export function DashboardLayout() {
     document.documentElement.dataset.theme = theme;
     window.localStorage.setItem('agriguard-theme', theme);
   }, [theme]);
+  useEffect(() => {
+    if (!state.isLoading && !state.error && state.claims.length === 0) {
+      setActiveTab('import');
+    }
+  }, [state.isLoading, state.error, state.claims.length]);
+
+  const openImportedPortfolio = async () => {
+    selectClaim(null);
+    toggleDetailPanel(false);
+    toggleNetworkPanel(false);
+    updateFilters({ searchQuery: '', tiers: [], cropTypes: [], perilTypes: [], pinnedOnly: false, minCompositeScore: 0, maxCompositeScore: 1 });
+    window.localStorage.removeItem('agriguard-demo-claim-state');
+    await refetchClaims();
+    setActiveTab('claims');
+  };
 
   // Active filter state variables
   const currentSearch = state.filters.searchQuery;
@@ -159,6 +178,30 @@ export function DashboardLayout() {
               <Layers size={16} className={activeTab === 'analytics' ? 'text-[#B8E3C2]' : 'text-[#ABD9BD]'} />
               {!sidebarCollapsed && <span className="dashboard-sidebar-label">Portfolio Analytics</span>}
             </button>
+
+            <button
+              onClick={() => { setActiveTab('import'); toggleDetailPanel(false); toggleNetworkPanel(false); }}
+              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[12px] font-medium transition-colors ${
+                activeTab === 'import'
+                  ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/10'
+                  : 'text-white/65 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <Upload size={16} className={activeTab === 'import' ? 'text-[#B8E3C2]' : 'text-[#ABD9BD]'} />
+              {!sidebarCollapsed && <span className="dashboard-sidebar-label">Import Dataset</span>}
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('laws'); toggleDetailPanel(false); toggleNetworkPanel(false); }}
+              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[12px] font-medium transition-colors ${
+                activeTab === 'laws'
+                  ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/10'
+                  : 'text-white/65 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <BookOpenCheck size={16} className={activeTab === 'laws' ? 'text-[#B8E3C2]' : 'text-[#ABD9BD]'} />
+              {!sidebarCollapsed && <span className="dashboard-sidebar-label">Inference Laws</span>}
+            </button>
           </nav>
 
           {/* Quick Metrics Summary Sidebar Widget */}
@@ -207,7 +250,7 @@ export function DashboardLayout() {
                 </span>
               </div>
               <div className="text-[10px] text-white/40">
-                Illustrative dataset · precomputed scores
+                Synthetic inputs · generated scores
               </div>
             </div>
           ) : (
@@ -286,7 +329,11 @@ export function DashboardLayout() {
           </div>
         </header>
 
-        {activeTab === 'analytics' ? <AnalyticsPanel claims={filteredClaims} /> : <>
+        {activeTab === 'analytics' ? <AnalyticsPanel claims={filteredClaims} /> : activeTab === 'import' ? (
+          <DatasetImportPanel onOpenDashboard={() => { void openImportedPortfolio(); }} />
+        ) : activeTab === 'laws' ? (
+          <InferenceLawsPanel />
+        ) : <>
         {/* Filter & Toolbar Row */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app-line bg-app-panel px-6 py-3">
           {/* Search Box */}
@@ -526,7 +573,7 @@ export function DashboardLayout() {
                               {gnnCount > 0 && (
                                 <span
                                   className="rounded-full bg-app-safe-soft text-app-safe px-2 py-0.5 font-semibold"
-                                  title="Precomputed risk signal"
+                                  title="Generated model signal"
                                 >
                                   Signal:{gnnCount}
                                 </span>
@@ -636,7 +683,7 @@ export function DashboardLayout() {
                     </div>
                   </div>
 
-                  {/* Risk Breakdown: precomputed score + symbolic logic */}
+                  {/* Risk Breakdown: model score + symbolic logic */}
                   <div className="px-6 py-5 space-y-4 border-b border-app-line">
                     <h4 className="font-heading text-sm font-semibold text-app-ink">
                       Risk Engine Breakdown

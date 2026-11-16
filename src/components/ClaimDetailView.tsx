@@ -360,7 +360,7 @@ export function ClaimDetailView() {
                 </div>
               ) : (
                 <p className="text-xs text-app-subtle italic">
-                  No precomputed network signal is attached to this claim.
+                  No network signal is attached to this claim.
                 </p>
               )}
             </div>

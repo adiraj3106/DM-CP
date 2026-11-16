@@ -123,8 +123,8 @@ function mapApiSummaryToClaim(item: ApiClaimSummary): AgriGuardClaim {
       {
         pillar: 'gnn',
         severity: tier === 'investigate' ? 'critical' : tier === 'review' ? 'high' : 'low',
-        title: 'Precomputed graph risk finding',
-        description: `Portfolio graph score ${item.risk_score.toFixed(1)}/100 (${item.triage_tier}); this score is precomputed and is not produced by live model inference.`,
+        title: 'GraphSAGE risk finding',
+        description: `Generated GraphSAGE score ${item.risk_score.toFixed(1)}/100 (${item.triage_tier}).`,
         sharedAssessorFlag: false,
         assessorClaimCountInCounty24Mo: 0,
         multiClaimProximityKm: 0,
@@ -151,7 +151,7 @@ function updateClaimWithDetail(claim: AgriGuardClaim, detail: ApiClaimDetail): A
     riskFlag: detail.risk_flag,
     anomalies: claim.anomalies.map((a) => {
       if (a.pillar === 'gnn' && gnnNote) {
-        return { ...a, description: `${gnnNote} (precomputed score; not live model inference).` };
+        return { ...a, description: gnnNote };
       }
       return a;
     }),
@@ -568,7 +568,7 @@ interface ClaimsContextValue {
   toggleNetworkPanel: (open?: boolean) => void;
   togglePinClaim: (claimId: string) => void;
   setInvestigatorNotes: (claimId: string, notes: string) => void;
-  refetchClaims: () => void;
+  refetchClaims: () => Promise<void>;
 }
 
 const ClaimsContext = createContext<ClaimsContextValue | undefined>(undefined);
@@ -638,6 +638,9 @@ export function ClaimsProvider({ children, initialClaims }: ClaimsProviderProps)
   const loadClaims = useCallback(async () => {
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
+    detailCache.current.clear();
+    detailApplied.current.clear();
+    networkCache.current.clear();
 
     try {
       const res = await fetch(`${API_BASE_URL}/claims`);
@@ -651,7 +654,6 @@ export function ClaimsProvider({ children, initialClaims }: ClaimsProviderProps)
         const personal = saved[claim.metadata.claimId];
         return personal ? { ...claim, isPinned: !!personal.isPinned, investigatorNotes: personal.investigatorNotes || '' } : claim;
       });
-      detailApplied.current.clear();
       dispatch({ type: 'SET_CLAIMS', payload: claims });
 
     } catch (err: any) {
