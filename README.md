@@ -1,42 +1,52 @@
-# AgriGuard — Discrete Mathematics Risk Analytics
+# AgriGuard
 
-AgriGuard is a local dashboard for an illustrative Maharashtra crop-insurance portfolio. It connects PMFBY-style claim, producer, assessor, crop, village, weather-zone and payout records to precomputed graph-risk scores and a propositional-logic inference trace.
+AgriGuard is a local crop-insurance risk-analysis project. It uses synthetic claim records and relationship data to train a heterogeneous GraphSAGE model, score claims, derive symbolic inference traces, and display the results in a React dashboard. Its metrics describe performance on the synthetic dataset only.
 
-**Portfolio records and scores are illustrative, not live PMFBY/RMA records.** The running API reads the CSVs in `agriguard_gnn_build/`. The bundled risk scores are precomputed values; the application does not load a trained GNN model. “Coverage” values in the UI are illustrative estimates derived from the claim amount and reported loss percentage, not source policy records.
+## Run the bundled portfolio
 
-## Run locally
-
-In one terminal, install the API dependencies and start FastAPI from the repository root:
+From the repository root, install dependencies:
 
 ```bash
-python -m pip install fastapi uvicorn pandas
+python -m pip install -r requirements.txt
+npm install
+```
+
+Generate model scores, a held-out evaluation, and inference traces from the bundled CSVs:
+
+```bash
+python agriguard_gnn_build/train_final.py agriguard_gnn_build
+```
+
+Start the API in one terminal:
+
+```bash
 python -m uvicorn backend.main:app --reload --port 8000
 ```
 
-In a second terminal, install frontend dependencies and start Vite:
+Start the dashboard in another terminal:
 
 ```bash
-npm install
-npm run dev -- --host 0.0.0.0
+npm run dev
 ```
 
-Open the local address printed by Vite. The frontend calls `http://localhost:8000` by default. To use another API address, set `VITE_API_BASE_URL` before starting Vite.
+Open the Vite address shown in the terminal. The API is available at `http://localhost:8000`; interactive API documentation is at `/docs`.
 
-## Features
+## Import another dataset
 
-- Search claims by claim ID, producer, assessor, district, village, crop, peril, policy, or weather zone.
-- Filter by risk tier, pin claims, inspect claim details, and view the claim relationship graph.
-- Explore filtered portfolio analytics and export the current filtered results as CSV.
-- Save analyst notes and pinned claims in the current browser.
-- Read generated proof traces from `claim_proofs.csv`. The inference pipeline only applies a rule when its premises are available. A zero risk flag means no configured risk trigger was derived; it does not prove `¬Risk`.
+Choose **Import Dataset** in the dashboard and provide four CSV files:
 
-## Regenerate the symbolic proof traces
+- `claims.csv`: `claim_id`, `farmer_id`, `assessor_id`, `zone_id`, `crop_type`, `claimed_damage_pct`, `claimed_payout_amount`, and `is_fraud`.
+- `farmers.csv`: `farmer_id`, `name`, `district`, and `land_holding_acres`.
+- `assessors.csv`: `assessor_id`, `name`, and `years_of_service`.
+- `weather_zones.csv`: `zone_id`, `event_type`, and `severity_index` (0 to 1).
 
-The 2,500 illustrative claim proof records can be regenerated from the bundled claims and precomputed risk scores:
+Claim labels are required because this local workflow trains and evaluates the model from the uploaded synthetic dataset. The API validates schemas, identifiers, class balance, and references, then trains GraphSAGE, computes test metrics against the synthetic labels, generates scores and proof traces, and activates the portfolio for the current backend session. An unsuccessful run leaves the active dashboard portfolio unchanged. Each backend restart starts with an empty portfolio; upload the CSVs again for a new session. Uploaded files and model artifacts are stored under `backend/uploads/`, which is excluded from Git, but are not loaded automatically.
 
-```bash
-python -m pip install numpy pandas scikit-learn
-python agriguard_gnn_build/inference_engine.py
-```
+## Model and output notes
 
-The training scripts are research artifacts; model training and scoring are not part of the local dashboard startup flow.
+- `agriguard_gnn_build/train_final.py` is the canonical training and scoring entry point. It uses stratified train, validation, and test splits; fits feature scalers on training data; selects a checkpoint on validation; reports the held-out test metrics; and compares against a claim-feature-only XGBoost baseline.
+- The graph evaluation is transductive: graph structure and unlabeled node features are available across the split, while fraud labels are used only for training and evaluation. Treat the metrics as results for this synthetic setup.
+- The selected checkpoint scores every claim for the dashboard. The held-out test metrics are measured only on the test split; scores for training rows are model outputs, not held-out predictions.
+- `claim_scores.csv`, `pipeline_metrics.json`, and `claim_proofs.csv` are generated by the pipeline. They can be recreated by rerunning the training command.
+- Symbolic rules use the generated scores and explicit premises. A missing rule trigger is inconclusive; it does not establish that a claim is safe.
+- The API does not expose the `is_fraud` or `fraud_type` training labels in claim responses.

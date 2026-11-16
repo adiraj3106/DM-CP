@@ -15,7 +15,8 @@ Domain Rules:
   2. (P and S) -> Collusion
   3. Collusion -> Risk
   4. (R and S) -> Risk
-  5. Risk -> Review
+  5. R -> Risk (a score of 70 or higher meets the configured investigate threshold)
+  6. Risk -> Review
 
 9 Laws of Inference:
   1. Modus Ponens
@@ -41,11 +42,25 @@ from sklearn.metrics import precision_score, recall_score
 
 # ─── 9 RULES OF INFERENCE AS SEPARATE FUNCTIONS ─────────────────────────────
 
+def _normalize_prop(value: str) -> str:
+    value = value.strip()
+    while len(value) > 1 and value[0] == "(" and value[-1] == ")":
+        value = value[1:-1].strip()
+    return value
+
+
+def _conditional_parts(conditional: str) -> Optional[Tuple[str, str]]:
+    if "->" not in conditional:
+        return None
+    antecedent, consequent = conditional.split("->", 1)
+    return _normalize_prop(antecedent), _normalize_prop(consequent)
+
 def modus_ponens(conditional_str: str, antecedent_str: str, antecedent_val: bool, consequent_str: str) -> Tuple[bool, Optional[str]]:
     """
     Modus Ponens: If A -> B and A is true, then B is true.
     """
-    if antecedent_val:
+    parts = _conditional_parts(conditional_str)
+    if parts == (_normalize_prop(antecedent_str), _normalize_prop(consequent_str)) and antecedent_val:
         trace = f"Modus Ponens: {conditional_str}, {antecedent_str} true => {consequent_str}"
         return True, trace
     return False, None
@@ -55,7 +70,8 @@ def modus_tollens(conditional_str: str, antecedent_str: str, consequent_str: str
     """
     Modus Tollens: If A -> B and ~B is true, then ~A is true.
     """
-    if consequent_negated:
+    parts = _conditional_parts(conditional_str)
+    if parts == (_normalize_prop(antecedent_str), _normalize_prop(consequent_str)) and consequent_negated:
         trace = f"Modus Tollens: {conditional_str}, ~{consequent_str} true => ~{antecedent_str}"
         return True, trace
     return False, None
@@ -67,7 +83,7 @@ def hypothetical_syllogism(rule1: Tuple[str, str], rule2: Tuple[str, str]) -> Tu
     """
     a, b1 = rule1
     b2, c = rule2
-    if b1 == b2:
+    if _normalize_prop(b1) == _normalize_prop(b2):
         derived_rule = (a, c)
         trace = f"Hypothetical Syllogism: {a}->{b1} and {b2}->{c} => {a}->{c}"
         return derived_rule, trace
@@ -80,7 +96,8 @@ def disjunctive_syllogism(disjunction: Tuple[str, str], negated_prop: str, negat
     """
     if not negated_val:
         return None, None
-    a, b = disjunction
+    a, b = map(_normalize_prop, disjunction)
+    negated_prop = _normalize_prop(negated_prop)
     if negated_prop == a:
         trace = f"Disjunctive Syllogism: {a} v {b}, ~{a} true => {b}"
         return b, trace
@@ -104,7 +121,9 @@ def simplification(conjunction_str: str, conj_val: bool, retained_prop: str) -> 
     """
     Simplification: If A ^ B is true, then A is true.
     """
-    if conj_val:
+    parts = conjunction_str.split("^", 1)
+    retained = _normalize_prop(retained_prop)
+    if conj_val and len(parts) == 2 and retained in {_normalize_prop(part) for part in parts}:
         trace = f"Simplification: ({conjunction_str}) true => {retained_prop}"
         return True, trace
     return False, None
@@ -124,7 +143,9 @@ def constructive_dilemma(cond1: Tuple[str, str], cond2: Tuple[str, str], disj: T
     """
     Constructive Dilemma: If (A -> B) ^ (C -> D) and A v C, then B v D.
     """
-    if disj_val:
+    expected_antecedents = (_normalize_prop(cond1[0]), _normalize_prop(cond2[0]))
+    supplied_disjunction = tuple(map(_normalize_prop, disj))
+    if disj_val and set(supplied_disjunction) == set(expected_antecedents):
         trace = f"Constructive Dilemma: ({cond1[0]}->{cond1[1]}) ^ ({cond2[0]}->{cond2[1]}), ({disj[0]} v {disj[1]}) => {cond1[1]} v {cond2[1]}"
         return True, trace
     return False, None
@@ -134,7 +155,12 @@ def destructive_dilemma(cond1: Tuple[str, str], cond2: Tuple[str, str], neg_disj
     """
     Destructive Dilemma: If (A -> B) ^ (C -> D) and ~B v ~D, then ~A v ~C.
     """
-    if neg_disj_val:
+    expected_consequents = {_normalize_prop(cond1[1]), _normalize_prop(cond2[1])}
+    supplied_negated_consequents = {
+        _normalize_prop(part.strip().removeprefix("~").removeprefix("¬"))
+        for part in neg_disj
+    }
+    if neg_disj_val and expected_consequents == supplied_negated_consequents:
         trace = f"Destructive Dilemma: ({cond1[0]}->{cond1[1]}) ^ ({cond2[0]}->{cond2[1]}), ~{neg_disj[0]} v ~{neg_disj[1]} => ~({cond1[0]}) v ~({cond2[0]})"
         return True, trace
     return False, None
@@ -153,7 +179,25 @@ def run_symbolic_inference(claims_path: str, scores_path: str, output_csv_path: 
     claims_df = pd.read_csv(claims_path)
     scores_df = pd.read_csv(scores_path)
 
-    df = claims_df.merge(scores_df[["claim_id", "risk_score", "triage_tier"]], on="claim_id", how="left")
+    required = {"claim_id", "risk_score", "triage_tier"}
+    missing = required.difference(scores_df.columns)
+    if missing:
+        raise ValueError(f"Scores file is missing required columns: {', '.join(sorted(missing))}")
+    if scores_df.claim_id.duplicated().any():
+        raise ValueError("Scores file contains duplicate claim_id values")
+
+    score_columns = ["claim_id", "risk_score", "triage_tier"]
+    if "split" in scores_df.columns:
+        score_columns.append("split")
+    df = claims_df.merge(
+        scores_df[score_columns], on="claim_id", how="left", validate="one_to_one", indicator=True
+    )
+    missing_scores = df.loc[df["_merge"] != "both", "claim_id"].tolist()
+    if missing_scores:
+        raise ValueError(f"No model score was generated for {len(missing_scores)} claims")
+    df = df.drop(columns="_merge")
+    if df.risk_score.isna().any() or not df.risk_score.between(0, 100).all():
+        raise ValueError("Risk scores must be present and between 0 and 100")
 
     # 1. Proposition P: share of claim's assessor's OTHER claims with risk_score >= 70 is > 0.4
     df["R"] = df["risk_score"] >= 70.0
@@ -181,11 +225,21 @@ def run_symbolic_inference(claims_path: str, scores_path: str, output_csv_path: 
     p90 = assessor_counts.quantile(0.90)
     df["S"] = df["assessor_id"].map(assessor_counts) > p90
 
-    # 4. Perform stratified 80/20 train/test split matching train_final.py (seed 42)
-    all_idx = np.arange(len(df))
-    tr, va = train_test_split(all_idx, test_size=0.20, stratify=df["is_fraud"], random_state=42)
-    df["split"] = "train"
-    df.loc[va, "split"] = "test"
+    # Use the exact split written by the model run so evaluation is repeatable.
+    if "split" not in df.columns:
+        all_idx = np.arange(len(df))
+        train_val, test = train_test_split(
+            all_idx, test_size=0.20, stratify=df["is_fraud"], random_state=42
+        )
+        train, validation = train_test_split(
+            train_val, test_size=0.25,
+            stratify=df["is_fraud"].iloc[train_val], random_state=42
+        )
+        df["split"] = "train"
+        df.loc[validation, "split"] = "validation"
+        df.loc[test, "split"] = "test"
+    elif not set(df["split"].dropna().unique()).issubset({"train", "validation", "test"}):
+        raise ValueError("Split values must be train, validation, or test")
 
     # Pre-derive transitive rules via Hypothetical Syllogism:
     # Rule 2: (P and S) -> Collusion; Rule 3: Collusion -> Risk
@@ -261,6 +315,13 @@ def run_symbolic_inference(claims_path: str, scores_path: str, output_csv_path: 
             _, trace = modus_ponens("(R^S)->Risk", "R^S", True, "Risk")
             record("Modus Ponens", trace)
             risk_inferred = True
+        elif R_val:
+            # A score in the configured investigate tier is sufficient under
+            # this explicit domain axiom; exceptional assessor workload is not
+            # also required for a symbolic risk deduction.
+            _, trace = modus_ponens("R->Risk", "R", R_val, "Risk")
+            record("Modus Ponens", trace)
+            risk_inferred = True
 
         # Constructive dilemma is valid here: both implications are axioms and
         # at least one side of their antecedent disjunction is established.
@@ -278,27 +339,8 @@ def run_symbolic_inference(claims_path: str, scores_path: str, output_csv_path: 
         if risk_inferred:
             _, trace = modus_ponens("Risk->Review", "Risk", True, "Review")
             record("Modus Ponens", trace)
-        elif str(row["triage_tier"]) == "approve":
-            # In this demo's mutually exclusive triage labels, Approve entails
-            # ~Review. This is an explicit observed routing premise, not an
-            # assumption made merely because a trigger was absent.
-            proof_steps.append("Observed routing premise: the mutually exclusive Approve tier entails ~Review.")
-            _, trace = modus_tollens("Risk->Review", "Risk", "Review", True)
-            record("Modus Tollens", trace)
-            _, trace = modus_tollens("(P^Q)->Risk", "P^Q", "Risk", True)
-            record("Modus Tollens", trace)
-            _, trace = modus_tollens("(R^S)->Risk", "R^S", "Risk", True)
-            record("Modus Tollens", trace)
-            _, trace = addition("Approve", True, "Review")
-            record("Addition", trace)
-            conclusion, trace = disjunctive_syllogism(("Approve", "Review"), "Review", True)
-            record("Disjunctive Syllogism", trace)
-            _, trace = addition("~Risk", True, "~Risk")
-            record("Addition", trace)
-            _, trace = destructive_dilemma(
-                ("P^Q", "Risk"), ("R^S", "Risk"), ("Risk", "Risk"), True
-            )
-            record("Destructive Dilemma", trace)
+        # A missing risk derivation is intentionally left inconclusive. The
+        # engine must not infer ¬Risk just because the triage tier is approve.
 
         results.append({
             "claim_id": cid,
@@ -311,6 +353,12 @@ def run_symbolic_inference(claims_path: str, scores_path: str, output_csv_path: 
         })
 
     proofs_df = pd.DataFrame(results)
+    claims_with_deduction = int(proofs_df["risk_flag"].sum())
+    print(
+        f"Claims with at least one derived Risk conclusion: "
+        f"{claims_with_deduction}/{len(proofs_df)} "
+        f"({claims_with_deduction / max(len(proofs_df), 1):.1%})"
+    )
 
     # Print how often each valid inference rule fires; unsupported negations are never assumed.
     # Print how often each rule fires

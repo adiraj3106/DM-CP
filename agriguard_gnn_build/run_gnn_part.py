@@ -216,24 +216,4 @@ print(
     else "gap NOT clearly bigger than noise - don't claim improvement yet",
 )
 
-# Create models directory
-import os
-os.makedirs("models", exist_ok=True)
-
-# Save the PyG graph structure
-torch.save(data, "models/hetero_graph.pt")
-
-# Save the trained GraphSAGE model weights
-final_model = HeteroGraphSAGE(hidden_dim=32)
-# Train/fit or re-use weights from best seed, then save:
-torch.save(final_model.state_dict(), "models/graphsage_model.pt")
-
-# Save metadata for feature dimension alignment during inference
-metadata = {
-    "node_features": {k: data[k].x.shape[1] for k in data.node_types},
-    "best_f1": 0.650,
-    "xgboost_f1": 0.479
-}
-torch.save(metadata, "models/model_metadata.pt")
-
-print("Saved model artifacts to models/")
+print("Benchmark complete. Use train_final.py to train and save the serving checkpoint.")

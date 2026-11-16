@@ -31,7 +31,7 @@ class ClaimSummary(BaseModel):
     crop_type: str = Field(..., description="Insured crop classification")
     claimed_payout_amount: float = Field(..., description="Claimed indemnity amount in INR")
     claim_date: str = Field(..., description="Date the loss was reported (YYYY-MM-DD)")
-    risk_score: float = Field(..., ge=0.0, le=100.0, description="Risk score calibrated from 0 to 100")
+    risk_score: float = Field(..., ge=0.0, le=100.0, description="Generated model risk score from 0 to 100; not a calibrated probability")
     triage_tier: TriageTier = Field(..., description="Operational triage routing: 'approve', 'review', or 'investigate'")
     policy_number: str
     farmer_id: str

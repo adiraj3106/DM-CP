@@ -72,7 +72,7 @@ export function AnalyticsPanel({ claims }: { claims: AgriGuardClaim[] }) {
         <BarList title="Claims by crop" caption="Top crops in the current selection" values={byCrop} icon={Sprout} />
         <BarList title="Claims by district" caption="Leading districts in the current selection" values={byDistrict} icon={MapPinned} />
       </div>
-      <p className="flex items-start gap-2 rounded-xl border border-app-line bg-app-panel px-4 py-3 text-[11px] leading-relaxed text-app-muted"><ArrowDownRight size={14} className="mt-0.5 shrink-0 text-app-safe" />Portfolio records are illustrative and risk scores are precomputed. “Risk rule flags” counts claims where the supplied propositional premises derive Risk; a zero means no configured rule fired, not a proof of ¬Risk.</p>
+      <p className="flex items-start gap-2 rounded-xl border border-app-line bg-app-panel px-4 py-3 text-[11px] leading-relaxed text-app-muted"><ArrowDownRight size={14} className="mt-0.5 shrink-0 text-app-safe" />Scores are generated from the current synthetic portfolio by the trained GraphSAGE model. “Risk rule flags” counts claims where the supplied propositional premises derive Risk; a zero means no configured rule fired, not a proof of ¬Risk.</p>
     </div>
   </main>;
 }
